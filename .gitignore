@@ -1,5 +1,11 @@
 # User defined
 .vscode
+networks
+autovc/results
+input
+spectograms
+convert_data
+output
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
