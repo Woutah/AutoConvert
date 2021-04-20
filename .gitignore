@@ -2,6 +2,8 @@
 .vscode
 networks
 autovc/results
+input
+spectograms
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

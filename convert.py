@@ -6,7 +6,7 @@ from spect_converter import SpectConverter
 input_dir = './input' # TODO: to config file
 
 # spectrogram directory
-output_dir = './spmel' # TODO: to config file
+output_dir = './spectograms' # TODO: to config file
 
 spect_converter = SpectConverter()
 
