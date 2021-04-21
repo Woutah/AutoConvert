@@ -26,8 +26,6 @@ parser.add_argument("--target", default=None,
                     help="Target speaker folder")
 parser.add_argument("--source_wav", default=None,
                     help="Source speaker utterance")
-parser.add_argument("--target_wav", default=None,
-                    help="Target speaker utterance")
 args = parser.parse_args()
 
 
@@ -98,7 +96,6 @@ def inference(output_dir, device, input_dir=None, input_data=None):
 source_speaker = args.source if args.source is not None else "p225"
 target_speaker = args.target if args.target is not None else "p225"
 source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
-target_list = args.target_wav if args.target_wav is not None else ["p225_024"]
 
     
 
@@ -116,7 +113,7 @@ if device.type == "cuda":
 
 converter = Converter(device)
 
-input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, target_list, converted_data_dir, metadata_name)
+input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name)
 
 output_data = inference(output_file_dir, device, input_data=input_data)
 

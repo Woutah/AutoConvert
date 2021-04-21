@@ -1,22 +1,17 @@
+import logging
 import os
+import pickle
+from collections import OrderedDict
+
 import numpy as np
 import soundfile as sf
+import torch
+from librosa.filters import mel
 from scipy import signal
 from scipy.signal import get_window
-from scipy.signal import get_window
-from librosa.filters import mel
-from numpy.random import RandomState
-import pickle
-from autovc.model_bl import D_VECTOR
-from collections import OrderedDict
-import torch
-from autovc.synthesis import build_model
-from autovc.synthesis import wavegen
-from librosa.feature.inverse import mel_to_audio
-import librosa
-import librosa.display
 
-import logging
+from autovc.model_bl import D_VECTOR
+from autovc.synthesis import build_model, wavegen
 from config import Config
 
 log = logging.getLogger(__name__)
@@ -193,7 +188,7 @@ class Converter:
         return speaker_embeddings
 
 
-    def wav_to_input(self, input_dir, source, target, source_list, target_list, output_dir, output_file):
+    def wav_to_input(self, input_dir, source, target, source_list, output_dir, output_file):
         spec_dir = Config.dir_paths["spectograms"]
         
         if not os.path.exists(output_dir):
@@ -201,7 +196,7 @@ class Converter:
         
         spects = self._wav_to_spec(input_dir, spec_dir)
         embeddings = self._spec_to_embedding(spec_dir, input_data=spects)
-        metadata = self._create_metadata(spec_dir, output_dir, source, target, source_list, target_list)
+        metadata = self._create_metadata(spec_dir, output_dir, source, target, source_list)
         
         return metadata
     

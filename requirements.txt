@@ -1,1 +1,3 @@
 wavenet_vocoder
+librosa
+tqdm
