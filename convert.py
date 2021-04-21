@@ -102,6 +102,7 @@ source_speaker = args.source if args.source is not None else "p225"
 target_speaker = args.target if args.target is not None else "p225"
 source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
 
+
     
 
 # directories
@@ -109,6 +110,14 @@ input_dir = Config.dir_paths["input"]
 converted_data_dir = Config.dir_paths["metadata"]
 output_file_dir = Config.dir_paths["output"]
 metadata_name = Config.metadata_name
+
+if not os.path.isdir(os.path.join(input_dir, source_speaker)):
+    print("Didn't find a {} folder in the {} folder".format(source_speaker, input_dir))
+    exit(1)
+    
+if not os.path.isdir(os.path.join(input_dir, target_speaker)):
+    print("Didn't find a {} folder in the {} folder".format(target_speaker, input_dir))
+    exit(1)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")
@@ -124,7 +133,3 @@ input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, s
 output_data = inference(output_file_dir, device, input_data=input_data)
 
 converter.output_to_wav(output_data)
-
-
-    
-

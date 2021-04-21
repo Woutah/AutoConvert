@@ -154,7 +154,7 @@ class Converter:
             new_state_dict[new_key] = val
         speaker_encoder.load_state_dict(new_state_dict)
         
-        num_uttrs = 10
+        num_uttrs = 7 # TODO: Why not just use all files?
         len_crop = 128
         
         if input_data is not None:
