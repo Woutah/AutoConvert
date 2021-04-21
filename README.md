@@ -1,6 +1,8 @@
 # API
 Seminar Audio Processing and Indexing 2021 final project
 
+!audio[ ./etc/p225_024xp225 ](./etc/p225_024xp225){ size=10 duration=10 cycle=forever }
+
 ## Installation
 
 Install dependencies using:
