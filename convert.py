@@ -6,9 +6,29 @@ import pickle
 from math import ceil
 import numpy as np
 from autovc.model_vc import Generator
-from synthesis import build_model
-from synthesis import wavegen
+
 import soundfile as sf
+
+import logging
+
+from config import Config
+import argparse
+
+logging.basicConfig(level=logging.DEBUG) 
+log = logging.getLogger(__name__)
+    
+
+# Parse arguments
+parser = argparse.ArgumentParser(description='Transfer voices using pretrained AutoVC')
+parser.add_argument("--source", default=None,
+                    help="Source speaker folder")
+parser.add_argument("--target", default=None,
+                    help="Target speaker folder")
+parser.add_argument("--source_wav", default=None,
+                    help="Source speaker utterance")
+parser.add_argument("--target_wav", default=None,
+                    help="Target speaker utterance")
+args = parser.parse_args()
 
 
 def pad_seq(x, base=32):
@@ -18,33 +38,41 @@ def pad_seq(x, base=32):
     return np.pad(x, ((0,len_pad),(0,0)), 'constant'), len_pad
 
 
-def inference(input_dir, output_dir, device):
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-        
+def inference(output_dir, device, input_dir=None, input_data=None):
+    network_path = os.path.join(Config.dir_paths["networks"], Config.pretrained_names["autovc"])   
     G = Generator(32,256,512,32).eval().to(device)
-    g_checkpoint = torch.load('./networks/autovc.ckpt', map_location=device) # TODO: config
+    g_checkpoint = torch.load(network_path, map_location=device) # TODO: config
     G.load_state_dict(g_checkpoint['model'])
+        
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)    
     
-    print(input_dir)
-    metadata = pickle.load(open(os.path.join(input_dir, 'metadata.pkl'), "rb"))
+    if input_data is not None:
+        metadata = input_data
+    elif input_dir is not None:
+        metadata = pickle.load(open(os.path.join(input_dir, Config.metadata_name), "rb"))
+        log.debug(input_dir)
+    
+    print("Starting inference...")
     
     spect_vc = []
-
-    for sbmt_i in metadata:
-        emb_org = torch.from_numpy(sbmt_i[1][np.newaxis, :]).to(device)
+    for src_speaker in metadata["source"].values():
+        
+        emb_org = torch.from_numpy(src_speaker["emb"][np.newaxis, :]).to(device)
         
         
         count = 0
-        for utterance in sbmt_i[2]: 
+        for utterance_i in src_speaker["utterances"].keys(): 
+            utterance = src_speaker["utterances"][utterance_i]
             #x_org = sbmt_i[2]
             x_org, len_pad = pad_seq(utterance)
             uttr_org = torch.from_numpy(x_org[np.newaxis, :, :]).to(device)
         
 
-            for sbmt_j in metadata:
+            for speaker_j in metadata["target"].keys():
+                trg_speaker = metadata["target"][speaker_j]
                         
-                emb_trg = torch.from_numpy(sbmt_j[1][np.newaxis, :]).to(device)
+                emb_trg = torch.from_numpy(trg_speaker["emb"][np.newaxis, :]).to(device)
                 
                 with torch.no_grad():
                     _, x_identic_psnt, _ = G(uttr_org, emb_org, emb_trg)
@@ -54,44 +82,42 @@ def inference(input_dir, output_dir, device):
                 else:
                     uttr_trg = x_identic_psnt[0, 0, :-len_pad, :].cpu().numpy()
                 
-                spect_vc.append( ('{}x{}_{}'.format(sbmt_i[0], sbmt_j[0], count), uttr_trg))
+                spect_vc.append( ('{}x{}'.format(utterance_i, speaker_j), uttr_trg))
                 
             count += 1
 
     with open(os.path.join(output_dir, 'results.pkl'), 'wb') as handle:
         pickle.dump(spect_vc, handle) 
     
+    print("Created output spectograms...")
+    
     return spect_vc
     
 
-def output_to_wav(output_data, device):
-    model = build_model().to(device)
-    checkpoint = torch.load("./networks/checkpoint_step001000000_ema.pth")
-    model.load_state_dict(checkpoint["state_dict"])
-    
-    for spect in output_data:
-        name = spect[0]
-        c = spect[1]
-        print(name)
-        waveform = wavegen(model, c=c)   
-        sf.write('results/'+name+'.wav', waveform, 16000)
-    
-    
-           
 
-# audio file directory
-input_dir = './input' # TODO: to config file
+source_speaker = args.source if args.source is not None else "p225"
+target_speaker = args.target if args.target is not None else "p226"
+source_list = args.source_wav if args.source_wav is not None else ["p225_003"]
+target_list = args.target_wav if args.target_wav is not None else ["p226_005"]
 
-# spectrogram directory
-converted_data_dir = './convert_data' # TODO: to config file
-output_file_dir = "./output"
+    
+
+# directories
+input_dir = Config.dir_paths["input"]
+converted_data_dir = Config.dir_paths["metadata"]
+output_file_dir = Config.dir_paths["output"]
+metadata_name = Config.metadata_name
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
+#device = "cpu"
 
 converter = Converter(device)
 
-converter.wav_to_input(input_dir, converted_data_dir)
+input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, target_list, converted_data_dir, metadata_name)
 
-inference(converted_data_dir, output_file_dir, device)
+output_data = inference(output_file_dir, device, input_data=input_data)
+
+converter.output_to_wav(output_data)
 
 
     

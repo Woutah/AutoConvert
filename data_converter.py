@@ -10,12 +10,19 @@ import pickle
 from autovc.model_bl import D_VECTOR
 from collections import OrderedDict
 import torch
+from autovc.synthesis import build_model
+from autovc.synthesis import wavegen
 
+import logging
+from config import Config
+
+log = logging.getLogger(__name__)
 
 class Converter:
     
     def __init__(self, device):
         self._device = device
+        log.info("Using device {}".format(self._device))
   
     
     def _butter_highpass(self, cutoff, fs, order=5):
@@ -41,99 +48,174 @@ class Converter:
         return np.abs(result)
     
     
-    def _wav_to_spec(self, input_dir, output_dir): # TODO: to config
+    def _wav_to_spec(self, input_dir, output_dir):
         mel_basis = mel(16000, 1024, fmin=90, fmax=7600, n_mels=80).T
         min_level = np.exp(-100 / 20 * np.log(10))
         b, a = self._butter_highpass(30, 16000, order=5)
 
         dirName, subdirList, _ = next(os.walk(input_dir)) 
+        
+        spects = {}
 
         for subdir in sorted(subdirList):
-            print(subdir)
             
             if not os.path.exists(os.path.join(output_dir, subdir)):
                 os.makedirs(os.path.join(output_dir, subdir))
                 
             _,_, fileList = next(os.walk(os.path.join(dirName,subdir)))
             
+            spects[subdir] = {}
             prng = RandomState(int(subdir[1:])) 
             for fileName in sorted(fileList):
                 # Read audio file
-                x, fs = sf.read(os.path.join(dirName,subdir,fileName))
+                x, _ = sf.read(os.path.join(dirName,subdir,fileName))
                 # Remove drifting noise
                 y = signal.filtfilt(b, a, x)
-                # Ddd a little random noise for model roubstness
+                # add a little random noise for model robustness
                 wav = y * 0.96 + (prng.rand(y.shape[0])-0.5)*1e-06
-                # Compute spect
+                # Compute spectogram
                 D = self._pySTFT(wav).T
                 # Convert to mel and normalize
                 D_mel = np.dot(D, mel_basis)
                 D_db = 20 * np.log10(np.maximum(min_level, D_mel)) - 16
                 S = np.clip((D_db + 100) / 100, 0, 1)    
-                # save spect    
-                np.save(os.path.join(output_dir, subdir, fileName[:-4]),
-                        S.astype(np.float32), allow_pickle=False)
+                
+                # Save spectogram    
+                np.save(os.path.join(output_dir, subdir, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
+                spects[subdir][fileName[:-4]] = S.astype(np.float32)
+                
+        print("Converted input files to spectograms...")
+        return spects
 
 
-    def _spec_to_metadata(self, input_dir, output_dir):
-        C = D_VECTOR(dim_input=80, dim_cell=768, dim_emb=256).eval().to(self._device)
-        c_checkpoint = torch.load('networks/3000000-BL.ckpt') # TODO: to config
+    def _load_spec_data(self, input_dir):
+        spects = {}
+        # Directory containing mel-spectrograms
+        dirName, subdirList, _ = next(os.walk(input_dir))
+        log.debug('Found directory: %s' % dirName)
+        
+        for speaker in sorted(subdirList):
+            _, _, fileList = next(os.walk(os.path.join(dirName,speaker)))
+            
+            spects[speaker] = {}
+            for file in fileList:
+                spect = np.load(os.path.join(dirName, speaker, file))
+                spects[speaker][file[:-4]] = spect
+        
+        return spects
+                
+        
+    def _create_metadata(self, input_dir, output_dir, source, target, source_list, target_list):
+        metadata = {"source" : {source : {"utterances" : {}}}, "target" : {target : {"utterances" : {}}}} # TODO: extend to multiple sources and targets
+        
+        speaker_emb = np.load(os.path.join(input_dir, source, source + "_emb.npy"))
+        metadata["source"][source]["emb"] = speaker_emb
+        for utterance in source_list:
+            spect = np.load(os.path.join(input_dir, source, utterance + ".npy"))
+            
+            metadata["source"][source]["utterances"][utterance] = spect
+        
+        speaker_emb = np.load(os.path.join(input_dir, target, target + "_emb.npy"))
+        metadata["target"][target]["emb"] = speaker_emb
+        for utterance in target_list:
+            spect = np.load(os.path.join(input_dir, target, utterance + ".npy"))
+            
+            metadata["target"][target]["utterances"][utterance] = spect
+            
+        with open(os.path.join(output_dir, Config.metadata_name), 'wb') as handle:
+            pickle.dump(metadata, handle) 
+            
+        return metadata
+
+
+    def _spec_to_embedding(self, output_dir, input_data=None, input_dir=None): 
+        speaker_encoder = D_VECTOR(dim_input=80, dim_cell=768, dim_emb=256).eval().to(self._device)
+        network_dir = Config.dir_paths["networks"]
+        speaker_encoder_name = Config.pretrained_names["speaker_encoder"]
+        c_checkpoint = torch.load(os.path.join(network_dir, speaker_encoder_name))     
         
         new_state_dict = OrderedDict()
         for key, val in c_checkpoint['model_b'].items():
             new_key = key[7:]
             new_state_dict[new_key] = val
-        C.load_state_dict(new_state_dict)
+        speaker_encoder.load_state_dict(new_state_dict)
+        
         num_uttrs = 10
         len_crop = 128
+        
+        if input_data is not None:
+            spects = input_data
+        elif input_dir is not None:
+            spects = self._load_spec_data(input_dir)
 
-        # Directory containing mel-spectrograms
-        dirName, subdirList, _ = next(os.walk(input_dir))
-        print('Found directory: %s' % dirName)
-
-
-        speakers = []
-        for speaker in sorted(subdirList):
-            print('Processing speaker: %s' % speaker)
-            metadata = []
-            metadata.append(speaker)
-            _, _, fileList = next(os.walk(os.path.join(dirName,speaker)))
+        speaker_embeddings = {}
+        for speaker in sorted(spects.keys()):
+            log.info('Processing speaker: %s' % speaker)
+            # metadata = []
+            # metadata.append(speaker)
+            
+            utterances_list = spects[speaker]
             
             # make speaker embedding
-            assert len(fileList) >= num_uttrs
-            idx_uttrs = np.random.choice(len(fileList), size=num_uttrs, replace=False)
+            assert len(utterances_list) >= num_uttrs
+            idx_uttrs = np.random.choice(len(utterances_list), size=num_uttrs, replace=False)
             embs = []
             full_spects = []
             
             for i in range(num_uttrs): # TODO: weird stuff? while loop seems to load first valid file multiple times if multiple invalids 
-                spect = np.load(os.path.join(dirName, speaker, fileList[idx_uttrs[i]]))
+                file = list(utterances_list.keys())[idx_uttrs[i]]
+                spect = utterances_list[file]
+                
                 full_spects.append(spect)
                 
-                candidates = np.delete(np.arange(len(fileList)), idx_uttrs)
+                candidates = np.delete(np.arange(len(utterances_list)), idx_uttrs)
                 
                 # choose another utterance if the current one is too short
                 while spect.shape[0] < len_crop:
                     idx_alt = np.random.choice(candidates)
-                    spect = np.load(os.path.join(dirName, speaker, fileList[idx_alt]))
+                    spect = utterances_list[idx_alt]
                     candidates = np.delete(candidates, np.argwhere(candidates==idx_alt))
                     
                 left = np.random.randint(0, spect.shape[0]-len_crop)
-                melsp = torch.from_numpy(spect[np.newaxis, left:left+len_crop, :]).cuda()
-                emb = C(melsp)
+                melsp = torch.from_numpy(spect[np.newaxis, left:left+len_crop, :]).to(self._device)
+                emb = speaker_encoder(melsp)
                 embs.append(emb.detach().squeeze().cpu().numpy())     
             
-            metadata.append(np.mean(embs, axis=0))
-            metadata.append(np.array(full_spects))
+            # metadata.append(np.mean(embs, axis=0))
+            # metadata.append(np.array(full_spects, dtype=object))
             
-            speakers.append(metadata)
+            # speakers.append(metadata)
+            speaker_embeddings[speaker] = np.mean(embs, axis=0)
             
-        with open(os.path.join(output_dir, 'metadata.pkl'), 'wb') as handle: # TODO: config?
-            pickle.dump(speakers, handle)
+            np.save(os.path.join(output_dir, speaker, "{}_emb".format(speaker)), 
+                                 speaker_embeddings[speaker], allow_pickle=False)
+               
+            
+        print("Extracted speaker embeddings...")
+        return speaker_embeddings
 
-    def wav_to_input(self, input_dir, output_dir):
+
+    def wav_to_input(self, input_dir, source, target, source_list, target_list, output_dir, output_file):
+        spec_dir = Config.dir_paths["spectograms"]
+        
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
         
-        spec_dir = "./spectograms"
-        self._wav_to_spec(input_dir, spec_dir)
-        self._spec_to_metadata(spec_dir, output_dir)
+        spects = self._wav_to_spec(input_dir, spec_dir)
+        embeddings = self._spec_to_embedding(spec_dir, input_data=spects)
+        metadata = self._create_metadata(spec_dir, output_dir, source, target, source_list, target_list)
+        
+        return metadata
+    
+    def output_to_wav(self, output_data):
+        model = build_model().to(self._device)
+        checkpoint = torch.load(os.path.join(Config.dir_paths["networks"], Config.pretrained_names["vocoder"]))
+        model.load_state_dict(checkpoint["state_dict"])
+        
+        print("Starting vocoder...")
+        for spect in output_data:
+            name = spect[0]
+            c = spect[1]
+            print(name)
+            waveform = wavegen(model, self._device, c=c)   
+            sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 16000)
