@@ -1,5 +1,5 @@
 # API
-Seminar Audio Processing and Indexing 2021 final project
+This repository contains code for the Seminar Audio Processing and Indexing 2021 final project at Leiden University. As a part of this project, we investigate voice style transfer 
 
 ## Installation
 
@@ -50,3 +50,7 @@ metadata.pkl
     |   +-- emb
     |   ...
 ```
+
+<audio controls>
+    <source src='https://raw.githubusercontent.com/Woutah/API/master/autovc/wavs/p225/p225_003.wav'>
+</audio>
