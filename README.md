@@ -1,7 +1,6 @@
 # API
 This repository contains code for the Seminar Audio Processing and Indexing 2021 final project at Leiden University. As a part of this project, we investigate voice style transfer systems.
 
-!audio[ ./etc/p225_024xp225 ](./etc/p225_024xp225){ size=10 duration=10 cycle=forever }
 
 ## Installation
 
