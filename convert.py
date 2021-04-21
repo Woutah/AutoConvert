@@ -56,40 +56,45 @@ def inference(output_dir, device, input_dir=None, input_data=None):
     print("Starting inference...")
     
     spect_vc = []
-    for src_speaker in metadata["source"].values():
+    for src_speaker in metadata["source"].values(): 
+        emb_org = torch.from_numpy(src_speaker["emb"][np.newaxis, :]).to(device) #Get source em
         
-        emb_org = torch.from_numpy(src_speaker["emb"][np.newaxis, :]).to(device)
-        
-        
-        count = 0
-        for utterance_i in src_speaker["utterances"].keys(): 
-            utterance = src_speaker["utterances"][utterance_i]
-            #x_org = sbmt_i[2]
-            x_org, len_pad = pad_seq(utterance)
-            uttr_org = torch.from_numpy(x_org[np.newaxis, :, :]).to(device)
-        
+        for speaker_j in metadata["target"].keys():
+            for utterance_i in src_speaker["utterances"].keys(): 
+                uttr_total = np.empty(shape=(0,80)) #used to concat sub-spectrograms (2-sec parts)
 
-            for speaker_j in metadata["target"].keys():
-                trg_speaker = metadata["target"][speaker_j]
-                        
-                emb_trg = torch.from_numpy(trg_speaker["emb"][np.newaxis, :]).to(device)
+                for sub_utterance in src_speaker["utterances"][utterance_i]: #iterate through sub-utterances (due to 2-sec limit spects. are split up if > 2 sec)
+                    # utterance = src_speaker["utterances"][utterance_i] 
+                    #x_org = sbmt_i[2]
+                    x_org, len_pad = pad_seq(sub_utterance)
+                    uttr_org = torch.from_numpy(x_org[np.newaxis, :, :]).to(device)
                 
-                with torch.no_grad():
-                    _, x_identic_psnt, _ = G(uttr_org, emb_org, emb_trg)
+
+                    trg_speaker = metadata["target"][speaker_j]
+                    emb_trg = torch.from_numpy(trg_speaker["emb"][np.newaxis, :]).to(device)
                     
-                if len_pad == 0:
-                    uttr_trg = x_identic_psnt[0, 0, :, :].cpu().numpy()
-                else:
-                    uttr_trg = x_identic_psnt[0, 0, :-len_pad, :].cpu().numpy()
-                
-                spect_vc.append( ('{}x{}'.format(utterance_i, speaker_j), uttr_trg))
-                
-            count += 1
+                    with torch.no_grad():
+                        _, x_identic_psnt, _ = G(uttr_org, emb_org, emb_trg)
+                        
+                    if len_pad == 0:
+                        uttr_trg = x_identic_psnt[0, 0, :, :].cpu().numpy()
+                    else:
+                        uttr_trg = x_identic_psnt[0, 0, :-len_pad, :].cpu().numpy()
+
+                    import matplotlib.pyplot as plt
+                    fig, ax = plt.subplots(2)
+                    ax[0].imshow(np.swapaxes(uttr_trg, 0, 1))
+                    uttr_total = np.concatenate((uttr_total, uttr_trg), axis=0) #append the split-spectrograms to create new one
+                    ax[1].imshow(np.swapaxes(uttr_total, 0, 1))
+                    plt.show()
+                        
+                spect_vc.append( ('{}x{}'.format(utterance_i, speaker_j), uttr_total))
+
 
     with open(os.path.join(output_dir, 'results.pkl'), 'wb') as handle:
         pickle.dump(spect_vc, handle) 
     
-    print("Created output spectograms...")
+    print("Created output spectrograms...")
     
     return spect_vc
     
@@ -113,7 +118,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 converter = Converter(device)
 
-input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, target_list, converted_data_dir, metadata_name)
+input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, target_list, converted_data_dir, metadata_name, device)
 
 output_data = inference(output_file_dir, device, input_data=input_data)
 

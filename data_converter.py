@@ -12,6 +12,7 @@ from collections import OrderedDict
 import torch
 from autovc.synthesis import build_model
 from autovc.synthesis import wavegen
+import math
 
 import logging
 from config import Config
@@ -73,18 +74,18 @@ class Converter:
                 y = signal.filtfilt(b, a, x)
                 # add a little random noise for model robustness
                 wav = y * 0.96 + (prng.rand(y.shape[0])-0.5)*1e-06
-                # Compute spectogram
+                # Compute spectrogram
                 D = self._pySTFT(wav).T
                 # Convert to mel and normalize
                 D_mel = np.dot(D, mel_basis)
                 D_db = 20 * np.log10(np.maximum(min_level, D_mel)) - 16
                 S = np.clip((D_db + 100) / 100, 0, 1)    
                 
-                # Save spectogram    
+                # Save spectrogram    
                 np.save(os.path.join(output_dir, subdir, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
                 spects[subdir][fileName[:-4]] = S.astype(np.float32)
                 
-        print("Converted input files to spectograms...")
+        print("Converted input files to spectrograms...")
         return spects
 
 
@@ -105,7 +106,7 @@ class Converter:
         return spects
                 
         
-    def _create_metadata(self, input_dir, output_dir, source, target, source_list, target_list):
+    def _create_metadata(self, input_dir, output_dir, source, target, source_list, target_list, len_crop=128):
         metadata = {"source" : {source : {"utterances" : {}}}, "target" : {target : {"utterances" : {}}}} # TODO: extend to multiple sources and targets
         
         speaker_emb = np.load(os.path.join(input_dir, source, source + "_emb.npy"))
@@ -113,7 +114,18 @@ class Converter:
         for utterance in source_list:
             spect = np.load(os.path.join(input_dir, source, utterance + ".npy"))
             
-            metadata["source"][source]["utterances"][utterance] = spect
+            spect_count = math.ceil(spect.shape[0]/len_crop) #Get amount of ~2-second spectrograms
+            # frames_per_spec = int(spect.shape[0]/spect_count) #get frames per spectrogram
+            frames_per_spec = 128
+            spects = []
+            i = 0
+            for i in range(spect_count - 1):
+                spects.append(spect[frames_per_spec * i: frames_per_spec * (i+1), :] )
+
+            spects.append(spect[frames_per_spec * (i+1): , :] ) #append the rest
+            
+            
+            metadata["source"][source]["utterances"][utterance] = spects
         
         speaker_emb = np.load(os.path.join(input_dir, target, target + "_emb.npy"))
         metadata["target"][target]["emb"] = speaker_emb
@@ -128,11 +140,11 @@ class Converter:
         return metadata
 
 
-    def _spec_to_embedding(self, output_dir, input_data=None, input_dir=None): 
+    def _spec_to_embedding(self, output_dir, device, input_data=None, input_dir=None): 
         speaker_encoder = D_VECTOR(dim_input=80, dim_cell=768, dim_emb=256).eval().to(self._device)
         network_dir = Config.dir_paths["networks"]
         speaker_encoder_name = Config.pretrained_names["speaker_encoder"]
-        c_checkpoint = torch.load(os.path.join(network_dir, speaker_encoder_name))     
+        c_checkpoint = torch.load(os.path.join(network_dir, speaker_encoder_name), map_location=device)     
         
         new_state_dict = OrderedDict()
         for key, val in c_checkpoint['model_b'].items():
@@ -195,14 +207,14 @@ class Converter:
         return speaker_embeddings
 
 
-    def wav_to_input(self, input_dir, source, target, source_list, target_list, output_dir, output_file):
-        spec_dir = Config.dir_paths["spectograms"]
+    def wav_to_input(self, input_dir, source, target, source_list, target_list, output_dir, output_file, device):
+        spec_dir = Config.dir_paths["spectrograms"]
         
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
         
         spects = self._wav_to_spec(input_dir, spec_dir)
-        embeddings = self._spec_to_embedding(spec_dir, input_data=spects)
+        embeddings = self._spec_to_embedding(spec_dir, device = device,input_data=spects)
         metadata = self._create_metadata(spec_dir, output_dir, source, target, source_list, target_list)
         
         return metadata
