@@ -81,12 +81,12 @@ def inference(output_dir, device, input_dir=None, input_data=None):
                     else:
                         uttr_trg = x_identic_psnt[0, 0, :-len_pad, :].cpu().numpy()
 
-                    import matplotlib.pyplot as plt
-                    fig, ax = plt.subplots(2)
-                    ax[0].imshow(np.swapaxes(uttr_trg, 0, 1))
                     uttr_total = np.concatenate((uttr_total, uttr_trg), axis=0) #append the split-spectrograms to create new one
-                    ax[1].imshow(np.swapaxes(uttr_total, 0, 1))
-                    plt.show()
+                    # import matplotlib.pyplot as plt
+                    # fig, ax = plt.subplots(2)
+                    # ax[0].imshow(np.swapaxes(uttr_trg, 0, 1))
+                    # ax[1].imshow(np.swapaxes(uttr_total, 0, 1))
+                    # plt.show()
                         
                 spect_vc.append( ('{}x{}'.format(utterance_i, speaker_j), uttr_total))
 
@@ -99,13 +99,14 @@ def inference(output_dir, device, input_dir=None, input_data=None):
     return spect_vc
     
 
-
 source_speaker = args.source if args.source is not None else "p225"
-target_speaker = args.target if args.target is not None else "p225"
+target_speaker = args.target if args.target is not None else "Wouter"
 source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
-target_list = args.target_wav if args.target_wav is not None else ["p225_024"]
+target_list = args.target_wav if args.target_wav is not None else ["1", "2", "3", "4", "5", "6", "7"]
 
-    
+
+
+
 
 # directories
 input_dir = Config.dir_paths["input"]
@@ -121,7 +122,7 @@ if device.type == "cuda":
 
 converter = Converter(device)
 
-input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, target_list, converted_data_dir, metadata_name, device)
+input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, target_list, converted_data_dir, metadata_name)
 
 output_data = inference(output_file_dir, device, input_data=input_data)
 

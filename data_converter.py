@@ -64,8 +64,8 @@ class Converter:
         
         spects = {}
 
-        for subdir in sorted(subdirList):
-            
+        for subdir in sorted(subdirList): #TODO: load from file if already exist? parameter that determines whether result should be saved
+             
             if not os.path.exists(os.path.join(output_dir, subdir)):
                 os.makedirs(os.path.join(output_dir, subdir))
                 
@@ -74,6 +74,8 @@ class Converter:
             spects[subdir] = {}
             #prng = RandomState(int(subdir[1:])) 
             for fileName in sorted(fileList):
+                # if fileName.rsplit(".",1)[0] not in source_list and fileName.rsplit(".",1)[0] not in target_list: #TODO: added this 2021-04-21, is this neccesary? Only load neccesary files
+                #     continue
                 # Read audio file
                 x, _ = sf.read(os.path.join(dirName,subdir,fileName))
                 # Remove drifting noise
@@ -147,11 +149,11 @@ class Converter:
         return metadata
 
 
-    def _spec_to_embedding(self, output_dir, device, input_data=None, input_dir=None): 
+    def _spec_to_embedding(self, output_dir, input_data=None, input_dir=None): 
         speaker_encoder = D_VECTOR(dim_input=80, dim_cell=768, dim_emb=256).eval().to(self._device)
         network_dir = Config.dir_paths["networks"]
         speaker_encoder_name = Config.pretrained_names["speaker_encoder"]
-        c_checkpoint = torch.load(os.path.join(network_dir, speaker_encoder_name), map_location=device)     
+        c_checkpoint = torch.load(os.path.join(network_dir, speaker_encoder_name), map_location=self._device)     
         
         new_state_dict = OrderedDict()
         for key, val in c_checkpoint['model_b'].items():
@@ -159,7 +161,7 @@ class Converter:
             new_state_dict[new_key] = val
         speaker_encoder.load_state_dict(new_state_dict)
         
-        num_uttrs = 10
+        num_uttrs = 7 #TODO: i changed this to 7
         len_crop = 128
         
         if input_data is not None:
@@ -174,7 +176,7 @@ class Converter:
             utterances_list = spects[speaker]
             
             # make speaker embedding
-            assert len(utterances_list) >= num_uttrs
+            assert len(utterances_list) >= num_uttrs 
             idx_uttrs = np.random.choice(len(utterances_list), size=num_uttrs, replace=False)
             
             embs = []
@@ -205,21 +207,21 @@ class Converter:
         return speaker_embeddings
 
 
-    def wav_to_input(self, input_dir, source, target, source_list, target_list, output_dir, output_file, device):
+    def wav_to_input(self, input_dir, source, target, source_list, target_list, output_dir, output_file):
         spec_dir = Config.dir_paths["spectrograms"]
         
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
         
         spects = self._wav_to_spec(input_dir, spec_dir)
-        embeddings = self._spec_to_embedding(spec_dir, device = device,input_data=spects)
+        embeddings = self._spec_to_embedding(spec_dir,input_data=spects)
         metadata = self._create_metadata(spec_dir, output_dir, source, target, source_list, target_list)
         
         return metadata
     
     def output_to_wav(self, output_data):
         model = build_model().to(self._device)
-        checkpoint = torch.load(os.path.join(Config.dir_paths["networks"], Config.pretrained_names["vocoder"]))
+        checkpoint = torch.load(os.path.join(Config.dir_paths["networks"], Config.pretrained_names["vocoder"]), map_location=self._device)
         model.load_state_dict(checkpoint["state_dict"])
         
         print("Starting vocoder...")
