@@ -97,13 +97,11 @@ def inference(output_dir, device, input_dir=None, input_data=None):
     return spect_vc
     
 
-
 source_speaker = args.source if args.source is not None else "p225"
-target_speaker = args.target if args.target is not None else "p225"
+target_speaker = args.target if args.target is not None else "Wouter"
 source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
 
 
-    
 
 # directories
 input_dir = Config.dir_paths["input"]
