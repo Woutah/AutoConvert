@@ -24,7 +24,7 @@ parser.add_argument("--source", default=None,
                     help="Source speaker folder")
 parser.add_argument("--target", default=None,
                     help="Target speaker folder")
-parser.add_argument("--source_wav", default=None,
+parser.add_argument("--source_wav", nargs='+', default=None,
                     help="Source speaker utterance")
 args = parser.parse_args()
 
@@ -60,7 +60,7 @@ def inference(output_dir, device, input_dir=None, input_data=None):
         for speaker_j in metadata["target"].keys():
             for utterance_i in src_speaker["utterances"].keys(): 
                 uttr_total = np.empty(shape=(0,80)) #used to concat sub-spectrograms (2-sec parts)
-
+                
                 for sub_utterance in src_speaker["utterances"][utterance_i]: #iterate through sub-utterances (due to 2-sec limit spects. are split up if > 2 sec)
                     # utterance = src_speaker["utterances"][utterance_i] 
                     #x_org = sbmt_i[2]
@@ -79,12 +79,12 @@ def inference(output_dir, device, input_dir=None, input_data=None):
                     else:
                         uttr_trg = x_identic_psnt[0, 0, :-len_pad, :].cpu().numpy()
 
-                    import matplotlib.pyplot as plt
-                    fig, ax = plt.subplots(2)
-                    ax[0].imshow(np.swapaxes(uttr_trg, 0, 1))
+                    # import matplotlib.pyplot as plt
+                    # fig, ax = plt.subplots(2)
+                    # ax[0].imshow(np.swapaxes(uttr_trg, 0, 1))
                     uttr_total = np.concatenate((uttr_total, uttr_trg), axis=0) #append the split-spectrograms to create new one
-                    ax[1].imshow(np.swapaxes(uttr_total, 0, 1))
-                    plt.show()
+                    # ax[1].imshow(np.swapaxes(uttr_total, 0, 1))
+                    # plt.show()
                         
                 spect_vc.append( ('{}x{}'.format(utterance_i, speaker_j), uttr_total))
 
@@ -111,6 +111,7 @@ output_file_dir = Config.dir_paths["output"]
 metadata_name = Config.metadata_name
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 if device.type == "cuda":
     print(torch.cuda.get_device_name(0))
@@ -118,7 +119,7 @@ if device.type == "cuda":
 
 converter = Converter(device)
 
-input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name)
+input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, device)
 
 output_data = inference(output_file_dir, device, input_data=input_data)
 

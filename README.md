@@ -22,7 +22,11 @@ input
 |    ...
 ```
 
-Run the following command to convert a specific source audio file to sound like a target speaker
+Run the following command to convert a specific source audio file to sound like a target speaker.
+
+```
+python convert.py --source speaker1 --target speaker2 --source_wav audio1
+```
 
 ## Metadata format
 Conversion data is converted to the intermediary `metadata.pkl` file used for converting. It consists of the following structure:
@@ -44,11 +48,5 @@ metadata.pkl
 +-- target
     +-- speaker1
     |   +-- emb
-    |   +-- utterances
-    |       +-- utterance1
-    |       |   +-- part1
-    |       |   |   ...    
-    |       |   ...
-    |       
     |   ...
 ```
