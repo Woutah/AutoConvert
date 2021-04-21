@@ -9,7 +9,7 @@ class Config:
         "input" : "./input",
         "output" : "./output",
         "metadata" : "./metadata",
-        "spectograms" : "./spectograms"
+        "spectrograms" : "./spectrograms"
     }
     
     pretrained_names = {
