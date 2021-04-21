@@ -12,6 +12,9 @@ from collections import OrderedDict
 import torch
 from autovc.synthesis import build_model
 from autovc.synthesis import wavegen
+from librosa.feature.inverse import mel_to_audio
+import librosa
+import librosa.display
 
 import logging
 from config import Config
@@ -19,6 +22,9 @@ from config import Config
 log = logging.getLogger(__name__)
 
 class Converter:
+    """
+    Convert audio data to and from the AutoVC format
+    """
     
     def __init__(self, device):
         self._device = device
@@ -65,14 +71,15 @@ class Converter:
             _,_, fileList = next(os.walk(os.path.join(dirName,subdir)))
             
             spects[subdir] = {}
-            prng = RandomState(int(subdir[1:])) 
+            #prng = RandomState(int(subdir[1:])) 
             for fileName in sorted(fileList):
                 # Read audio file
                 x, _ = sf.read(os.path.join(dirName,subdir,fileName))
                 # Remove drifting noise
                 y = signal.filtfilt(b, a, x)
                 # add a little random noise for model robustness
-                wav = y * 0.96 + (prng.rand(y.shape[0])-0.5)*1e-06
+                #wav = y * 0.96 + (prng.rand(y.shape[0])-0.5)*1e-06 # TODO: remove for converting?
+                wav = y
                 # Compute spectogram
                 D = self._pySTFT(wav).T
                 # Convert to mel and normalize
@@ -151,22 +158,17 @@ class Converter:
         speaker_embeddings = {}
         for speaker in sorted(spects.keys()):
             log.info('Processing speaker: %s' % speaker)
-            # metadata = []
-            # metadata.append(speaker)
             
             utterances_list = spects[speaker]
             
             # make speaker embedding
             assert len(utterances_list) >= num_uttrs
             idx_uttrs = np.random.choice(len(utterances_list), size=num_uttrs, replace=False)
-            embs = []
-            full_spects = []
             
+            embs = []
             for i in range(num_uttrs): # TODO: weird stuff? while loop seems to load first valid file multiple times if multiple invalids 
                 file = list(utterances_list.keys())[idx_uttrs[i]]
                 spect = utterances_list[file]
-                
-                full_spects.append(spect)
                 
                 candidates = np.delete(np.arange(len(utterances_list)), idx_uttrs)
                 
@@ -181,10 +183,6 @@ class Converter:
                 emb = speaker_encoder(melsp)
                 embs.append(emb.detach().squeeze().cpu().numpy())     
             
-            # metadata.append(np.mean(embs, axis=0))
-            # metadata.append(np.array(full_spects, dtype=object))
-            
-            # speakers.append(metadata)
             speaker_embeddings[speaker] = np.mean(embs, axis=0)
             
             np.save(os.path.join(output_dir, speaker, "{}_emb".format(speaker)), 
@@ -215,7 +213,23 @@ class Converter:
         print("Starting vocoder...")
         for spect in output_data:
             name = spect[0]
-            c = spect[1]
+            c = spect[1]   
+            waveform = wavegen(model, self._device, c=c)
+            
             print(name)
-            waveform = wavegen(model, self._device, c=c)   
+            # c = np.transpose(spect[1])   
+            
+            # import matplotlib.pyplot as plt
+            # plt.figure(figsize=(10, 4))
+            # librosa.display.specshow(librosa.power_to_db(c,
+            #                                             ref=np.max),
+            #                         y_axis='mel', fmax=7600,
+            #                         x_axis='time')
+            # plt.colorbar(format='%+2.0f dB')
+            # plt.title('Mel spectrogram')
+            # plt.tight_layout()
+            # plt.show()
+            #waveform = mel_to_audio(c, sr=16000, n_fft=1024, hop_length=256)
+            #waveform = mel_to_audio(c, sr=16000)
+            
             sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 16000)

@@ -14,7 +14,7 @@ import logging
 from config import Config
 import argparse
 
-logging.basicConfig(level=logging.DEBUG) 
+logging.basicConfig(level=logging.INFO) 
 log = logging.getLogger(__name__)
     
 
@@ -41,7 +41,7 @@ def pad_seq(x, base=32):
 def inference(output_dir, device, input_dir=None, input_data=None):
     network_path = os.path.join(Config.dir_paths["networks"], Config.pretrained_names["autovc"])   
     G = Generator(32,256,512,32).eval().to(device)
-    g_checkpoint = torch.load(network_path, map_location=device) # TODO: config
+    g_checkpoint = torch.load(network_path, map_location=device) 
     G.load_state_dict(g_checkpoint['model'])
         
     if not os.path.exists(output_dir):
@@ -96,9 +96,9 @@ def inference(output_dir, device, input_dir=None, input_data=None):
 
 
 source_speaker = args.source if args.source is not None else "p225"
-target_speaker = args.target if args.target is not None else "p226"
-source_list = args.source_wav if args.source_wav is not None else ["p225_003"]
-target_list = args.target_wav if args.target_wav is not None else ["p226_005"]
+target_speaker = args.target if args.target is not None else "p225"
+source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
+target_list = args.target_wav if args.target_wav is not None else ["p225_024"]
 
     
 
@@ -108,8 +108,11 @@ converted_data_dir = Config.dir_paths["metadata"]
 output_file_dir = Config.dir_paths["output"]
 metadata_name = Config.metadata_name
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-#device = "cpu"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+if device.type == "cuda":
+    print(torch.cuda.get_device_name(0))
+
 
 converter = Converter(device)
 
