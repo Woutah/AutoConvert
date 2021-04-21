@@ -1,5 +1,5 @@
 # API
-This repository contains code for the Seminar Audio Processing and Indexing 2021 final project at Leiden University. As a part of this project, we investigate voice style transfer systems.
+This repository contains code for the Seminar Audio Processing and Indexing 2021 final project at Leiden University. As a part of this project, we investigate voice style transfer systems. We aim to create an easy-to-use conversion program utilising the [AutoVC](https://github.com/auspicious3000/autovc) voice conversion model.
 
 ## Installation
 
@@ -51,6 +51,9 @@ metadata.pkl
     |   ...
 ```
 
-<audio controls>
-    <source src='https://raw.githubusercontent.com/Woutah/API/master/autovc/wavs/p225/p225_003.wav'>
-</audio>
+## Progress
+
+- [x] Implement easy conversion using audio files
+- [x] Split audio files into ~2 second parts for processing by AutoVC
+    - [ ] Investigate audio scramble 
+- [ ] Fix slow [WaveNet](https://github.com/r9y9/wavenet_vocoder) vocoder
