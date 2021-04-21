@@ -1,23 +1,18 @@
+import logging
+import math
 import os
+import pickle
+from collections import OrderedDict
+
 import numpy as np
 import soundfile as sf
+import torch
+from librosa.filters import mel
 from scipy import signal
 from scipy.signal import get_window
-from scipy.signal import get_window
-from librosa.filters import mel
-from numpy.random import RandomState
-import pickle
-from autovc.model_bl import D_VECTOR
-from collections import OrderedDict
-import torch
-from autovc.synthesis import build_model
-from autovc.synthesis import wavegen
-import math
-from librosa.feature.inverse import mel_to_audio
-import librosa
-import librosa.display
 
-import logging
+from autovc.model_bl import D_VECTOR
+from autovc.synthesis import build_model, wavegen
 from config import Config
 
 log = logging.getLogger(__name__)
@@ -115,8 +110,8 @@ class Converter:
         return spects
                 
         
-    def _create_metadata(self, input_dir, output_dir, source, target, source_list, target_list, len_crop=128):
-        metadata = {"source" : {source : {"utterances" : {}}}, "target" : {target : {"utterances" : {}}}} # TODO: extend to multiple sources and targets
+    def _create_metadata(self, input_dir, output_dir, source, target, source_list, len_crop=128):
+        metadata = {"source" : {source : {"utterances" : {}}}, "target" : {target : {}}} # TODO: extend to multiple sources and targets
         
         speaker_emb = np.load(os.path.join(input_dir, source, source + "_emb.npy"))
         metadata["source"][source]["emb"] = speaker_emb
@@ -138,10 +133,10 @@ class Converter:
         
         speaker_emb = np.load(os.path.join(input_dir, target, target + "_emb.npy"))
         metadata["target"][target]["emb"] = speaker_emb
-        for utterance in target_list:
-            spect = np.load(os.path.join(input_dir, target, utterance + ".npy"))
+        # for utterance in target_list:
+        #     spect = np.load(os.path.join(input_dir, target, utterance + ".npy"))
             
-            metadata["target"][target]["utterances"][utterance] = spect
+        #     metadata["target"][target]["utterances"][utterance] = spect
             
         with open(os.path.join(output_dir, Config.metadata_name), 'wb') as handle:
             pickle.dump(metadata, handle) 
@@ -161,7 +156,7 @@ class Converter:
             new_state_dict[new_key] = val
         speaker_encoder.load_state_dict(new_state_dict)
         
-        num_uttrs = 7 #TODO: i changed this to 7
+        num_uttrs = 7 # TODO: Why not just use all files?
         len_crop = 128
         
         if input_data is not None:
@@ -207,15 +202,15 @@ class Converter:
         return speaker_embeddings
 
 
-    def wav_to_input(self, input_dir, source, target, source_list, target_list, output_dir, output_file):
+    def wav_to_input(self, input_dir, source, target, source_list, output_dir, output_file, device):
         spec_dir = Config.dir_paths["spectrograms"]
         
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
         
         spects = self._wav_to_spec(input_dir, spec_dir)
-        embeddings = self._spec_to_embedding(spec_dir,input_data=spects)
-        metadata = self._create_metadata(spec_dir, output_dir, source, target, source_list, target_list)
+        embeddings = self._spec_to_embedding(spec_dir, device = device,input_data=spects)
+        metadata = self._create_metadata(spec_dir, output_dir, source, target, source_list)
         
         return metadata
     
