@@ -1,4 +1,4 @@
-from model_vc import Generator
+from autovc.model_vc import Generator
 import torch
 import torch.nn.functional as F
 import time
@@ -87,8 +87,8 @@ class Solver(object):
                         
             # Identity mapping loss
             x_identic, x_identic_psnt, code_real = self.G(x_real, emb_org, emb_org)
-            g_loss_id = F.mse_loss(x_real, x_identic)   
-            g_loss_id_psnt = F.mse_loss(x_real, x_identic_psnt)   
+            g_loss_id = F.mse_loss(x_real, torch.reshape(x_identic, (x_real.shape)))   # TODO: added: reshape tensors to fix user warning
+            g_loss_id_psnt = F.mse_loss(x_real, torch.reshape(x_identic_psnt, (x_real.shape)))   # TODO: added: reshape tensors to fix user warning
             
             # Code semantic loss.
             code_reconst = self.G(x_identic_psnt, emb_org, None)

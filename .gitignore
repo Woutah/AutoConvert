@@ -6,6 +6,7 @@ input
 spectrograms
 metadata
 output
+autovc/spmel
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -136,4 +137,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-VCTK-Corpus-0.92.zip

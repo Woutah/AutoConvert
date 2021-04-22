@@ -1,3 +1,6 @@
+"""
+Convert audio files using a pretrained model
+"""
 import argparse
 import logging
 import os

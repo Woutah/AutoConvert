@@ -209,7 +209,7 @@ class Converter:
         
         #TODO: use existing embedding if file exists?
         
-        num_uttrs = 7 # TODO: Why not just use all files?
+        num_uttrs = 10 # TODO: Why not just use all files?
         len_crop = 128
         
         if input_data is not None:
@@ -303,23 +303,34 @@ class Converter:
         print("Starting vocoder...")
         for spect in output_data:
             name = spect[0]
-            c = spect[1]   
-            waveform = wavegen(model, self._device, c=c)
-            
             print(name)
-            # c = np.transpose(spect[1])   
+            # TODO: enable this for wavenet conversion
+            #------------------------------------------------
+            # c = spect[1]   
+            # waveform = wavegen(model, self._device, c=c)
+            #------------------------------------------------
             
-            # import matplotlib.pyplot as plt
-            # plt.figure(figsize=(10, 4))
-            # librosa.display.specshow(librosa.power_to_db(c,
-            #                                             ref=np.max),
-            #                         y_axis='mel', fmax=7600,
-            #                         x_axis='time')
-            # plt.colorbar(format='%+2.0f dB')
-            # plt.title('Mel spectrogram')
-            # plt.tight_layout()
-            # plt.show()
-            #waveform = mel_to_audio(c, sr=16000, n_fft=1024, hop_length=256)
-            #waveform = mel_to_audio(c, sr=16000)
+            # TODO: enable this for librosa conversion
+            #------------------------------------------------
+            import librosa
+            c = spect[1].T
+            import matplotlib.pyplot as plt
+            import librosa.display
+            plt.figure(figsize=(10, 4))
+            c = (np.clip(c, 0, 1) * - -100) + 100 # https://github.com/auspicious3000/autovc/issues/14 I suspect other values are used in the AutoVC code but it seems to somewhat work
+            #c = np.power(10.0, c * 0.05)
+            c = librosa.db_to_amplitude(c, ref=20)
+            
+            librosa.display.specshow(librosa.power_to_db(c, ref=np.max),
+                                    y_axis='mel', fmax=7600,
+                                    x_axis='time')
+            plt.colorbar(format='%+2.0f dB')
+            plt.title('Mel spectrogram')
+            plt.tight_layout()
+            plt.show()
+            
+            waveform = librosa.feature.inverse.mel_to_audio(c, sr=16000, n_fft=1024, hop_length=256)
+            name += "_librosa"
+            #--------------------------------------------------
             
             sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 16000)
