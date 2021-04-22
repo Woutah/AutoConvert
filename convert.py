@@ -1,18 +1,16 @@
+import argparse
+import logging
 import os
-
-from data_converter import Converter
-import torch
 import pickle
 from math import ceil
+
 import numpy as np
+import torch
+import torchaudio
+
 from autovc.model_vc import Generator
-
-import soundfile as sf
-
-import logging
-
 from config import Config
-import argparse
+from data_converter import Converter
 
 logging.basicConfig(level=logging.INFO) 
 log = logging.getLogger(__name__)
@@ -38,6 +36,8 @@ def pad_seq(x, base=32):
 
 def inference(output_dir, device, input_dir=None, input_data=None):
     network_path = os.path.join(Config.dir_paths["networks"], Config.pretrained_names["autovc"])   
+    
+    # Define AutoVC model
     G = Generator(32,256,512,32).eval().to(device)
     g_checkpoint = torch.load(network_path, map_location=device) 
     G.load_state_dict(g_checkpoint['model'])
@@ -45,6 +45,7 @@ def inference(output_dir, device, input_dir=None, input_data=None):
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)    
     
+    # Load input data
     if input_data is not None:
         metadata = input_data
     elif input_dir is not None:
@@ -79,10 +80,11 @@ def inference(output_dir, device, input_dir=None, input_data=None):
                     else:
                         uttr_trg = x_identic_psnt[0, 0, :-len_pad, :].cpu().numpy()
 
+                    uttr_total = np.concatenate((uttr_total, uttr_trg), axis=0) #append the split-spectrograms to create new one
+                    
                     # import matplotlib.pyplot as plt
                     # fig, ax = plt.subplots(2)
                     # ax[0].imshow(np.swapaxes(uttr_trg, 0, 1))
-                    uttr_total = np.concatenate((uttr_total, uttr_trg), axis=0) #append the split-spectrograms to create new one
                     # ax[1].imshow(np.swapaxes(uttr_total, 0, 1))
                     # plt.show()
                         
@@ -123,6 +125,7 @@ device = torch.device("cpu")
 if device.type == "cuda":
     print(torch.cuda.get_device_name(0))
 
+#data = torchaudio.datasets.VCTK_092(".", download=True)
 
 converter = Converter(device)
 

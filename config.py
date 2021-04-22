@@ -20,5 +20,7 @@ class Config:
     
     metadata_name = "metadata.pkl"
     
+    audio_sr = 16000
+    
     
     

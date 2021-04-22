@@ -3,11 +3,13 @@ import math
 import os
 import pickle
 from collections import OrderedDict
+import librosa
 
 import numpy as np
 import soundfile as sf
 import torch
 from librosa.filters import mel
+from librosa import resample
 from scipy import signal
 from scipy.signal import get_window
 
@@ -50,35 +52,51 @@ class Converter:
         return np.abs(result)
     
     
-    def _wav_to_spec(self, input_dir, output_dir):
+    def _wav_to_spec(self, input_dir, output_dir, speakers):
+        """Convert wav file to a mel spectrogram
+
+        Args:
+            input_dir (str): Path to input directory
+            output_dir (str): Path to output directory
+
+        Returns:
+            np.array: Mel spectrogram
+        """
         mel_basis = mel(16000, 1024, fmin=90, fmax=7600, n_mels=80).T
         min_level = np.exp(-100 / 20 * np.log(10))
         b, a = self._butter_highpass(30, 16000, order=5)
 
-        dirName, subdirList, _ = next(os.walk(input_dir)) 
+        #dirName, subdirList, _ = next(os.walk(input_dir)) 
         
         spects = {}
 
-        for subdir in sorted(subdirList): #TODO: load from file if already exist? parameter that determines whether result should be saved
-             
-            if not os.path.exists(os.path.join(output_dir, subdir)):
-                os.makedirs(os.path.join(output_dir, subdir))
+        #for subdir in sorted(subdirList): #TODO: load from file if already exist? parameter that determines whether result should be saved
+        for speaker in speakers:
+            print(speaker)   
+            if not os.path.exists(os.path.join(output_dir, speaker)):
+                os.makedirs(os.path.join(output_dir, speaker))
                 
-            _,_, fileList = next(os.walk(os.path.join(dirName,subdir)))
+            _,_, fileList = next(os.walk(os.path.join(input_dir, speaker)))
             
-            spects[subdir] = {}
+            spects[speaker] = {}
             #prng = RandomState(int(subdir[1:])) 
             for fileName in sorted(fileList):
                 # if fileName.rsplit(".",1)[0] not in source_list and fileName.rsplit(".",1)[0] not in target_list: #TODO: added this 2021-04-21, is this neccesary? Only load neccesary files
                 #     continue
                 # Read audio file
-                x, _ = sf.read(os.path.join(dirName,subdir,fileName))
+                x, sr = sf.read(os.path.join(input_dir, speaker, fileName))
+                
+                print(sr)
+                if sr != Config.audio_sr:
+                    x = librosa.resample(x, sr, Config.audio_sr)
+                    print("resampled to {}".format(Config.audio_sr))
+                
                 # Remove drifting noise
                 y = signal.filtfilt(b, a, x)
                 # add a little random noise for model robustness
                 #wav = y * 0.96 + (prng.rand(y.shape[0])-0.5)*1e-06 # TODO: remove for converting?
                 wav = y
-                # Compute spectogram
+                # Compute spectrogram
                 D = self._pySTFT(wav).T
                 # Convert to mel and normalize
                 D_mel = np.dot(D, mel_basis)
@@ -86,14 +104,22 @@ class Converter:
                 S = np.clip((D_db + 100) / 100, 0, 1)    
                 
                 # Save spectrogram    
-                np.save(os.path.join(output_dir, subdir, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
-                spects[subdir][fileName[:-4]] = S.astype(np.float32)
+                np.save(os.path.join(output_dir, speaker, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
+                spects[speaker][fileName[:-4]] = S.astype(np.float32)
                 
         print("Converted input files to spectrograms...")
         return spects
 
 
     def _load_spec_data(self, input_dir):
+        """Load spectrograms from a directory
+
+        Args:
+            input_dir (str): Path to input directory
+
+        Returns:
+            dict: Loaded mel spectrograms
+        """
         spects = {}
         # Directory containing mel-spectrograms
         dirName, subdirList, _ = next(os.walk(input_dir))
@@ -110,14 +136,30 @@ class Converter:
         return spects
                 
         
-    def _create_metadata(self, input_dir, output_dir, source, target, source_list, len_crop=128):
+    def _create_metadata(self, input_dir, source, target, source_list, len_crop=128):
+        """Create conversion metadata using the format described in the README.md
+
+        Args:
+            input_dir (str): Path to input directory
+            source (str): Name of source speaker
+            target (str): Name of target speaker
+            source_list (list): List of source utterances to convert
+            len_crop (int, optional): Length of the audio cropping. Defaults to 128.
+
+        Returns:
+            dict: Metadata object
+        """
         metadata = {"source" : {source : {"utterances" : {}}}, "target" : {target : {}}} # TODO: extend to multiple sources and targets
         
+        # Source speaker embedding
         speaker_emb = np.load(os.path.join(input_dir, source, source + "_emb.npy"))
         metadata["source"][source]["emb"] = speaker_emb
+        
+        # Source speaker utterances
         for utterance in source_list:
             spect = np.load(os.path.join(input_dir, source, utterance + ".npy"))
             
+            # Split utterance 
             spect_count = math.ceil(spect.shape[0]/len_crop) #Get amount of ~2-second spectrograms
             # frames_per_spec = int(spect.shape[0]/spect_count) #get frames per spectrogram
             frames_per_spec = 128
@@ -127,27 +169,36 @@ class Converter:
                 spects.append(spect[frames_per_spec * i: frames_per_spec * (i+1), :] )
 
             spects.append(spect[frames_per_spec * (i+1): , :] ) #append the rest
-            
-            
+            print("Amount of parts: {}".format(len(spects)))
             metadata["source"][source]["utterances"][utterance] = spects
         
+        # Target speaker embedding
         speaker_emb = np.load(os.path.join(input_dir, target, target + "_emb.npy"))
         metadata["target"][target]["emb"] = speaker_emb
+        
         # for utterance in target_list:
         #     spect = np.load(os.path.join(input_dir, target, utterance + ".npy"))
             
         #     metadata["target"][target]["utterances"][utterance] = spect
             
-        with open(os.path.join(output_dir, Config.metadata_name), 'wb') as handle:
-            pickle.dump(metadata, handle) 
-            
         return metadata
 
 
     def _spec_to_embedding(self, output_dir, input_data=None, input_dir=None): 
-        speaker_encoder = D_VECTOR(dim_input=80, dim_cell=768, dim_emb=256).eval().to(self._device)
+        """Generates speaker embeddings from spectograms from internal memory or a directory
+
+        Args:
+            output_dir (str): Path to output directory
+            input_data (list], optional): Spectogram from internal memory. Defaults to None.
+            input_dir (str, optional): Path to input directory. Defaults to None.
+
+        Returns:
+            list: List of speaker embeddings
+        """
+        # Load speaker encoder
         network_dir = Config.dir_paths["networks"]
         speaker_encoder_name = Config.pretrained_names["speaker_encoder"]
+        speaker_encoder = D_VECTOR(dim_input=80, dim_cell=768, dim_emb=256).eval().to(self._device)
         c_checkpoint = torch.load(os.path.join(network_dir, speaker_encoder_name), map_location=self._device)     
         
         new_state_dict = OrderedDict()
@@ -155,6 +206,8 @@ class Converter:
             new_key = key[7:]
             new_state_dict[new_key] = val
         speaker_encoder.load_state_dict(new_state_dict)
+        
+        #TODO: use existing embedding if file exists?
         
         num_uttrs = 7 # TODO: Why not just use all files?
         len_crop = 128
@@ -203,18 +256,46 @@ class Converter:
 
 
     def wav_to_input(self, input_dir, source, target, source_list, output_dir, output_file):
-        spec_dir = Config.dir_paths["spectrograms"]
+        """Conver wav files to input metadata
+
+        Args:
+            input_dir (str): Path to input directory
+            source (str): Name of source speaker in the input directory
+            target (str): Name of target speaker in the input directory
+            source_list (list): List of source utterences to convert
+            output_dir (str): Path to output directory
+            output_file (str): Name of output file
+
+        Returns:
+            dict: Metadata object (See README.md for format)
+        """
+        spec_dir = Config.dir_paths["spectrograms"] # Where to save generated spects
         
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
+            
+        speakers = [source, target]
         
-        spects = self._wav_to_spec(input_dir, spec_dir)
-        embeddings = self._spec_to_embedding(spec_dir,input_data=spects)
-        metadata = self._create_metadata(spec_dir, output_dir, source, target, source_list)
+        # Convert audio to spectrograms
+        spects = self._wav_to_spec(input_dir, spec_dir, speakers)
+        
+        # Generate speaker embeddings
+        embeddings = self._spec_to_embedding(spec_dir, input_data=spects)
+        
+        # Create conversion metadata
+        metadata = self._create_metadata(spec_dir, source, target, source_list)
+        
+        with open(os.path.join(output_dir, output_file), 'wb') as handle:
+            pickle.dump(metadata, handle) 
         
         return metadata
     
     def output_to_wav(self, output_data):
+        """Convert mel spectograms to audio files
+
+        Args:
+            output_data (list): List of mel spectograms to convert
+        """
         model = build_model().to(self._device)
         checkpoint = torch.load(os.path.join(Config.dir_paths["networks"], Config.pretrained_names["vocoder"]), map_location=self._device)
         model.load_state_dict(checkpoint["state_dict"])
