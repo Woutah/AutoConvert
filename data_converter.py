@@ -50,7 +50,7 @@ class Converter:
         return np.abs(result)
     
     
-    def _wav_to_spec(self, input_dir, output_dir):
+    def _wav_to_spec(self, input_dir, output_dir, speakers):
         """Convert wav file to a mel spectrogram
 
         Args:
@@ -64,24 +64,24 @@ class Converter:
         min_level = np.exp(-100 / 20 * np.log(10))
         b, a = self._butter_highpass(30, 16000, order=5)
 
-        dirName, subdirList, _ = next(os.walk(input_dir)) 
+        #dirName, subdirList, _ = next(os.walk(input_dir)) 
         
         spects = {}
 
-        for subdir in sorted(subdirList): #TODO: load from file if already exist? parameter that determines whether result should be saved
-             
-            if not os.path.exists(os.path.join(output_dir, subdir)):
-                os.makedirs(os.path.join(output_dir, subdir))
+        #for subdir in sorted(subdirList): #TODO: load from file if already exist? parameter that determines whether result should be saved
+        for speaker in speakers:   
+            if not os.path.exists(os.path.join(output_dir, speaker)):
+                os.makedirs(os.path.join(output_dir, speaker))
                 
-            _,_, fileList = next(os.walk(os.path.join(dirName,subdir)))
+            _,_, fileList = next(os.walk(os.path.join(input_dir, speaker)))
             
-            spects[subdir] = {}
+            spects[speaker] = {}
             #prng = RandomState(int(subdir[1:])) 
             for fileName in sorted(fileList):
                 # if fileName.rsplit(".",1)[0] not in source_list and fileName.rsplit(".",1)[0] not in target_list: #TODO: added this 2021-04-21, is this neccesary? Only load neccesary files
                 #     continue
                 # Read audio file
-                x, _ = sf.read(os.path.join(dirName,subdir,fileName))
+                x, _ = sf.read(os.path.join(input_dir, speaker, fileName))
                 # Remove drifting noise
                 y = signal.filtfilt(b, a, x)
                 # add a little random noise for model robustness
@@ -95,8 +95,8 @@ class Converter:
                 S = np.clip((D_db + 100) / 100, 0, 1)    
                 
                 # Save spectrogram    
-                np.save(os.path.join(output_dir, subdir, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
-                spects[subdir][fileName[:-4]] = S.astype(np.float32)
+                np.save(os.path.join(output_dir, speaker, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
+                spects[speaker][fileName[:-4]] = S.astype(np.float32)
                 
         print("Converted input files to spectrograms...")
         return spects
@@ -197,6 +197,8 @@ class Converter:
             new_state_dict[new_key] = val
         speaker_encoder.load_state_dict(new_state_dict)
         
+        #TODO: use existing embedding if file exists?
+        
         num_uttrs = 7 # TODO: Why not just use all files?
         len_crop = 128
         
@@ -261,9 +263,11 @@ class Converter:
         
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
+            
+        speakers = [source, target]
         
         # Convert audio to spectrograms
-        spects = self._wav_to_spec(input_dir, spec_dir)
+        spects = self._wav_to_spec(input_dir, spec_dir, speakers)
         
         # Generate speaker embeddings
         embeddings = self._spec_to_embedding(spec_dir, input_data=spects)
