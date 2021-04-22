@@ -126,7 +126,7 @@ if device.type == "cuda":
 
 converter = Converter(device)
 
-input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, device)
+input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name)
 
 output_data = inference(output_file_dir, device, input_data=input_data)
 

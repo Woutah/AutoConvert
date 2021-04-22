@@ -189,7 +189,7 @@ class Converter:
                     
                 left = np.random.randint(0, spect.shape[0]-len_crop)
                 melsp = torch.from_numpy(spect[np.newaxis, left:left+len_crop, :]).to(self._device)
-                emb = speaker_encoder(melsp)
+                emb = speaker_encoder(melsp[:128, :])#TODO: remove :128
                 embs.append(emb.detach().squeeze().cpu().numpy())     
             
             speaker_embeddings[speaker] = np.mean(embs, axis=0)
@@ -202,14 +202,14 @@ class Converter:
         return speaker_embeddings
 
 
-    def wav_to_input(self, input_dir, source, target, source_list, output_dir, output_file, device):
+    def wav_to_input(self, input_dir, source, target, source_list, output_dir, output_file):
         spec_dir = Config.dir_paths["spectrograms"]
         
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
         
         spects = self._wav_to_spec(input_dir, spec_dir)
-        embeddings = self._spec_to_embedding(spec_dir, device = device,input_data=spects)
+        embeddings = self._spec_to_embedding(spec_dir,input_data=spects)
         metadata = self._create_metadata(spec_dir, output_dir, source, target, source_list)
         
         return metadata
