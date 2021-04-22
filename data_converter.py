@@ -3,11 +3,13 @@ import math
 import os
 import pickle
 from collections import OrderedDict
+import librosa
 
 import numpy as np
 import soundfile as sf
 import torch
 from librosa.filters import mel
+from librosa import resample
 from scipy import signal
 from scipy.signal import get_window
 
@@ -69,7 +71,8 @@ class Converter:
         spects = {}
 
         #for subdir in sorted(subdirList): #TODO: load from file if already exist? parameter that determines whether result should be saved
-        for speaker in speakers:   
+        for speaker in speakers:
+            print(speaker)   
             if not os.path.exists(os.path.join(output_dir, speaker)):
                 os.makedirs(os.path.join(output_dir, speaker))
                 
@@ -81,7 +84,13 @@ class Converter:
                 # if fileName.rsplit(".",1)[0] not in source_list and fileName.rsplit(".",1)[0] not in target_list: #TODO: added this 2021-04-21, is this neccesary? Only load neccesary files
                 #     continue
                 # Read audio file
-                x, _ = sf.read(os.path.join(input_dir, speaker, fileName))
+                x, sr = sf.read(os.path.join(input_dir, speaker, fileName))
+                
+                print(sr)
+                if sr != Config.audio_sr:
+                    x = librosa.resample(x, sr, Config.audio_sr)
+                    print("resampled to {}".format(Config.audio_sr))
+                
                 # Remove drifting noise
                 y = signal.filtfilt(b, a, x)
                 # add a little random noise for model robustness
@@ -160,6 +169,7 @@ class Converter:
                 spects.append(spect[frames_per_spec * i: frames_per_spec * (i+1), :] )
 
             spects.append(spect[frames_per_spec * (i+1): , :] ) #append the rest
+            print("Amount of parts: {}".format(len(spects)))
             metadata["source"][source]["utterances"][utterance] = spects
         
         # Target speaker embedding

@@ -6,6 +6,7 @@ from math import ceil
 
 import numpy as np
 import torch
+import torchaudio
 
 from autovc.model_vc import Generator
 from config import Config
@@ -124,6 +125,7 @@ device = torch.device("cpu")
 if device.type == "cuda":
     print(torch.cuda.get_device_name(0))
 
+#data = torchaudio.datasets.VCTK_092(".", download=True)
 
 converter = Converter(device)
 
