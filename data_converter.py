@@ -92,14 +92,11 @@ class Converter:
 		D_db = 20 * np.log10(np.maximum(min_level, D_mel)) - 16
 		S = np.clip((D_db + 100) / 100, 0, 1)    
 		
-		# Save spectrogram    
-		# np.save(os.path.join(output_dir, speaker, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
-		# spects[speaker][fileName[:-4]] = S.astype(np.float32)
-				
+
 		print("Converted input files to spectrograms...")
 		return S
 	
-	def _wac_dir_to_spec_dir(self, input_dir, output_dir, speakers):
+	def _wav_dir_to_spec_dir(self, input_dir, output_dir, speakers):
 		"""Convert wav files in folder `input_dir` to a mel spectrogram
 
 		Args:
@@ -113,8 +110,6 @@ class Converter:
 		min_level = np.exp(-100 / 20 * np.log(10))
 		b, a = self._butter_highpass(30, 16000, order=5)
 
-		#dirName, subdirList, _ = next(os.walk(input_dir)) 
-		
 		spects = {}
 
 		#for subdir in sorted(subdirList): #TODO: load from file if already exist? parameter that determines whether result should be saved
@@ -149,6 +144,7 @@ class Converter:
 			dict: Loaded mel spectrograms
 		"""
 		spects = {}
+
 		# Directory containing mel-spectrograms
 		dirName, subdirList, _ = next(os.walk(input_dir))
 		log.debug('Found directory: %s' % dirName)
@@ -174,7 +170,7 @@ class Converter:
 			source_list (list): List of source utterances to convert
 			len_crop (int, optional): Length of the audio cropping. Defaults to 128.
 
-		Returns:
+
 			dict: Metadata object
 		"""
 		metadata = {"source" : {source : {"utterances" : {}}}, "target" : {target : {}}} # TODO: extend to multiple sources and targets
@@ -203,11 +199,6 @@ class Converter:
 		# Target speaker embedding
 		speaker_emb = np.load(os.path.join(input_dir, target, target + "_emb.npy"))
 		metadata["target"][target]["emb"] = speaker_emb
-		
-		# for utterance in target_list:
-		#     spect = np.load(os.path.join(input_dir, target, utterance + ".npy"))
-			
-		#     metadata["target"][target]["utterances"][utterance] = spect
 			
 		return metadata
 

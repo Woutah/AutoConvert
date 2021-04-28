@@ -1,3 +1,4 @@
 wavenet_vocoder
 librosa
 tqdm
+matplotlib
