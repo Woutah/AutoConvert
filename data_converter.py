@@ -170,6 +170,8 @@ class Converter:
 
             spects.append(spect[frames_per_spec * (i+1): , :] ) #append the rest
             print("Amount of parts: {}".format(len(spects)))
+            
+            #spects = [spect] #TODO: remove for split utterences
             metadata["source"][source]["utterances"][utterance] = spects
         
         # Target speaker embedding
@@ -209,7 +211,7 @@ class Converter:
         
         #TODO: use existing embedding if file exists?
         
-        num_uttrs = 10 # TODO: Why not just use all files?
+        num_uttrs = 7 # TODO: Why not just use all files?
         len_crop = 128
         
         if input_data is not None:
@@ -242,13 +244,15 @@ class Converter:
                     
                 left = np.random.randint(0, spect.shape[0]-len_crop)
                 melsp = torch.from_numpy(spect[np.newaxis, left:left+len_crop, :]).to(self._device)
-                emb = speaker_encoder(melsp[:128, :])#TODO: remove :128
+                emb = speaker_encoder(melsp)#TODO: remove :128
                 embs.append(emb.detach().squeeze().cpu().numpy())     
             
             speaker_embeddings[speaker] = np.mean(embs, axis=0)
             
-            np.save(os.path.join(output_dir, speaker, "{}_emb".format(speaker)), 
+            emb_file_name = "{}_emb".format(speaker)
+            np.save(os.path.join(output_dir, speaker, emb_file_name), 
                                  speaker_embeddings[speaker], allow_pickle=False)
+            print("Saving speaker embedding to {}".format(emb_file_name))
                
             
         print("Extracted speaker embeddings...")
@@ -303,34 +307,35 @@ class Converter:
         print("Starting vocoder...")
         for spect in output_data:
             name = spect[0]
-            print(name)
+            
             # TODO: enable this for wavenet conversion
             #------------------------------------------------
-            # c = spect[1]   
-            # waveform = wavegen(model, self._device, c=c)
+            c = spect[1]   
+            waveform = wavegen(model, self._device, c=c)
             #------------------------------------------------
             
             # TODO: enable this for librosa conversion
             #------------------------------------------------
-            import librosa
-            c = spect[1].T
-            import matplotlib.pyplot as plt
-            import librosa.display
-            plt.figure(figsize=(10, 4))
-            c = (np.clip(c, 0, 1) * - -100) + 100 # https://github.com/auspicious3000/autovc/issues/14 I suspect other values are used in the AutoVC code but it seems to somewhat work
-            #c = np.power(10.0, c * 0.05)
-            c = librosa.db_to_amplitude(c, ref=20)
+            # import librosa
+            # c = spect[1].T
+            # import matplotlib.pyplot as plt
+            # import librosa.display
+            # plt.figure(figsize=(10, 4))
+            # #c = np.clip((c + 100) / 100, 0, 1)    
+            # c = (c *100) + 100  # https://github.com/auspicious3000/autovc/issues/14 I suspect other values are used in the AutoVC code but it seems to somewhat work
+            # c = np.power(10.0, c * 0.05)
+            # #c = librosa.db_to_amplitude(c, ref=20)
             
-            librosa.display.specshow(librosa.power_to_db(c, ref=np.max),
-                                    y_axis='mel', fmax=7600,
-                                    x_axis='time')
-            plt.colorbar(format='%+2.0f dB')
-            plt.title('Mel spectrogram')
-            plt.tight_layout()
-            plt.show()
+            # # librosa.display.specshow(librosa.power_to_db(c, ref=np.max),
+            # #                         y_axis='mel', fmax=7600,
+            # #                         x_axis='time')
+            # # plt.colorbar(format='%+2.0f dB')
+            # # plt.title('Mel spectrogram')
+            # # plt.tight_layout()
+            # # plt.show()
             
-            waveform = librosa.feature.inverse.mel_to_audio(c, sr=16000, n_fft=1024, hop_length=256)
-            name += "_librosa"
+            # waveform = librosa.feature.inverse.mel_to_audio(c, sr=16000, n_fft=1024, hop_length=256)
+            # name += "_librosa"
             #--------------------------------------------------
-            
+            print(name)
             sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 16000)

@@ -123,7 +123,7 @@ if not os.path.isdir(os.path.join(input_dir, target_speaker)):
     exit(1)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
+# device = torch.device("cpu")
 
 if device.type == "cuda":
     print(torch.cuda.get_device_name(0))
