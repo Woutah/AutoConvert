@@ -1,34 +1,45 @@
+import argparse
+import logging
 import os
-from data_converter import Converter
-import torch
 import pickle
 from math import ceil
-import numpy as np
-from autovc.model_vc import Generator
-import soundfile as sf
-import logging
-from config import Config
-import argparse
 
+import numpy as np
+import soundfile as sf
+import torch
 from numpy.random import RandomState
+
+import matplotlib.pyplot as plt
+
+import utility
+from autovc.model_vc import Generator
+from config import Config
+from data_converter import Converter
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if device.type == "cuda":
     print(torch.cuda.get_device_name(0))
 
-
 converter = Converter(device)
 
-S = 
-spec_dir = Config.dir_paths["spectrograms"]
-specs = converter._wav_to_spec(input_dir, spec_dir)
+fig, ax = plt.subplots(1,3)
+
+x, sr = sf.read(utility.get_full_path(".\\input\\Wouter\\wouter_please_call_stella.wav"))
+spec_wouter = converter._wav_to_spec(x, sr)
+ax[0].imshow(np.swapaxes(spec_wouter, 0, 1))
+ax[0].set_title("Wouter")
+
+x, sr = sf.read(utility.get_full_path(".\\input\\p225\\p225_001.wav"))
+spec_225 = converter._wav_to_spec(x, sr)
+ax[1].imshow(np.swapaxes(spec_225, 0, 1))
+ax[1].set_title("225")
 
 
-# spect_convert_list =  [('Wouter_test_wav_to_spect_to_wav', specs["Wouter"]["6"])] #6 = "This is a test sentence"
+x, sr = sf.read(utility.get_full_path(".\\input\\p270_001.wav"))
+spec_270 = converter._wav_to_spec(x, sr)
+ax[2].imshow(np.swapaxes(spec_270, 0, 1))
+ax[2].set_title("270")
 
-# converter.output_to_wav( spect_convert_list )
-
-# print("Done")
-# input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, target_list, converted_data_dir, metadata_name)
-
-# output_data = inference(output_file_dir, device, input_data=input_data)
+plt.show()
