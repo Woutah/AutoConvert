@@ -8,6 +8,7 @@ metadata
 output
 autovc/spmel
 train_input
+autovc/train_wavs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

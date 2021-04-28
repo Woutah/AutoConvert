@@ -4,6 +4,8 @@ import torch.nn.functional as F
 import time
 import datetime
 
+import os
+
 
 class Solver(object):
 
@@ -28,9 +30,16 @@ class Solver(object):
         self.use_cuda = torch.cuda.is_available()
         self.device = torch.device('cuda:0' if self.use_cuda else 'cpu')
         self.log_step = config.log_step
+        self.save_freq = config.save_freq
+        self.checkpoint_dir= config.checkpoint_dir
 
         # Build the model and tensorboard.
         self.build_model()
+        self.model_path = config.model_path
+        
+        if self.model_path is not None:
+            g_checkpoint = torch.load(self.model_path, map_location=self.device) 
+            self.G.load_state_dict(g_checkpoint['model'])
 
             
     def build_model(self):
@@ -119,6 +128,9 @@ class Solver(object):
                 for tag in keys:
                     log += ", {}: {:.4f}".format(tag, loss[tag])
                 print(log)
+                
+            if (i+1) % self.save_freq == 0:
+                torch.save(self.G, os.path.join(self.checkpoint_dir, "autovc_{}".format(i+1)))
                 
 
     
