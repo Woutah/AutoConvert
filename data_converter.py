@@ -13,6 +13,7 @@ from librosa import resample
 from scipy import signal
 from scipy.signal import get_window
 
+from numpy.random import RandomState
 from autovc.model_bl import D_VECTOR
 from autovc.synthesis import build_model, wavegen
 from config import Config
@@ -80,6 +81,7 @@ class Converter:
 
 		if introduce_noise:
 			log.info(f"Introducing random noise into wav.file")
+			prng = RandomState() #TODO: should this be the same each time?
 			wav = wav * 0.96 + (prng.rand(wav.shape[0])-0.5)*1e-06
 		# add a little random noise for model robustness
 

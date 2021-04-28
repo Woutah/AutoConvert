@@ -10,22 +10,7 @@ import logging
 from config import Config
 import argparse
 
-
-source_speaker = "p225"
-source_list =  ["p225_024"]
-target_speaker = "Wouter"
-target_list = ["1", "2", "3", "4", "5", "6", "7"]
-
-
-
-
-
-# directories
-input_dir = Config.dir_paths["input"]
-converted_data_dir = Config.dir_paths["metadata"]
-output_file_dir = Config.dir_paths["output"]
-metadata_name = Config.metadata_name
-
+from numpy.random import RandomState
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if device.type == "cuda":
@@ -34,6 +19,7 @@ if device.type == "cuda":
 
 converter = Converter(device)
 
+S = 
 spec_dir = Config.dir_paths["spectrograms"]
 specs = converter._wav_to_spec(input_dir, spec_dir)
 
