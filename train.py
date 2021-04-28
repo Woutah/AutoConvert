@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--freq', type=int, default=16)
     
     # Training configuration.
-    parser.add_argument('--data_dir', type=str, default='./metadata')
+    parser.add_argument('--data_dir', type=str, default='./train_input')
     parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints')
     parser.add_argument('--batch_size', type=int, default=2, help='mini-batch size')
     parser.add_argument('--num_iters', type=int, default=1000000, help='number of total iterations')
