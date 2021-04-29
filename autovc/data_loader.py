@@ -10,12 +10,22 @@ from multiprocessing import Process, Manager
 class Utterances(data.Dataset):
     """Dataset class for the Utterances dataset."""
 
-    def __init__(self, root_dir, len_crop):
-        """Initialize and preprocess the Utterances dataset."""
+    def __init__(self, root_dir, len_crop, crop_range = None):
+        """Initialize and preprocess the Utterances dataset.
+
+        Args:
+            root_dir (str): Root dir path with metadata (see data_converter.py - generate_train_data)
+            len_crop (int): Spectrogram width for each sample (`len_crop`x80 mel spectrograms) - ignored when `take_avg_length` = True 
+            crop_avg_length (bool): Whether to take the average spect width for cropsize instead of a custom value - ignored `len_crop`. Defaults to False.
+        """
         self.root_dir = root_dir
         self.len_crop = len_crop
         self.step = 10
-        
+
+        #==========cropping method===============
+        self.crop_range = crop_range
+        #======================================
+
         metaname = os.path.join(self.root_dir, "train.pkl")
         meta = pickle.load(open(metaname, "rb"))
         
@@ -47,7 +57,9 @@ class Utterances(data.Dataset):
                 else: # load the mel-spectrograms
                     uttrs[j] = np.load(os.path.join(self.root_dir, tmp))
             dataset[idx_offset+k] = uttrs
-                   
+
+
+        
         
     def __getitem__(self, index):
         # pick a random speaker
@@ -58,6 +70,12 @@ class Utterances(data.Dataset):
         # pick random uttr with random crop
         a = np.random.randint(2, len(list_uttrs))
         tmp = list_uttrs[a]
+        
+        len_crop = self.len_crop
+        if self.crop_range is not None: #if len_crop range is specified, use that instead
+            len_crop = np.random.randint(*self.crop_range)
+
+
         if tmp.shape[0] < self.len_crop:
             len_pad = self.len_crop - tmp.shape[0]
             uttr = np.pad(tmp, ((0,len_pad),(0,0)), 'constant')
@@ -77,10 +95,10 @@ class Utterances(data.Dataset):
     
     
 
-def get_loader(root_dir, batch_size=16, len_crop=128, num_workers=0):
+def get_loader(root_dir, batch_size=16, len_crop=128, num_workers=0, crop_range = None):
     """Build and return a data loader."""
     
-    dataset = Utterances(root_dir, len_crop)
+    dataset = Utterances(root_dir, len_crop, crop_range)
     
     worker_init_fn = lambda x: np.random.seed((torch.initial_seed()) % (2**32))
     data_loader = data.DataLoader(dataset=dataset,
