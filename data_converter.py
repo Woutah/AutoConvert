@@ -259,17 +259,18 @@ class Converter:
                 file = list(utterances_list.keys())[idx_uttrs[i]]
                 spect = utterances_list[file]
                 
-                candidates = np.delete(np.arange(len(utterances_list)), idx_uttrs)
+                candidates = np.delete(np.arange(len(utterances_list)), idx_uttrs[i])
                 
                 # choose another utterance if the current one is too short
                 while spect.shape[0] < len_crop:
                     idx_alt = np.random.choice(candidates)
-                    spect = utterances_list[idx_alt]
+                    file = list(utterances_list.keys())[idx_alt]
+                    spect = utterances_list[file]
                     candidates = np.delete(candidates, np.argwhere(candidates==idx_alt))
                     
                 left = np.random.randint(0, spect.shape[0]-len_crop)
                 melsp = torch.from_numpy(spect[np.newaxis, left:left+len_crop, :]).to(self._device)
-                emb = speaker_encoder(melsp[:128, :])#TODO: remove :128
+                emb = speaker_encoder(melsp)
                 embs.append(emb.detach().squeeze().cpu().numpy())     
             
             speaker_embeddings[speaker] = np.mean(embs, axis=0)

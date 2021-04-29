@@ -60,11 +60,13 @@ if __name__ == '__main__':
         os.mkdir(config.checkpoint_dir)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    converter = Converter(device)
     
-    input_dir = config.input_dir
-    output_dir = config.data_dir
-    output_file = Config.train_metadata_name
-    _ = converter.generate_train_data(input_dir, output_dir, output_file)
+    if not os.path.exists(os.path.join(config.data_dir, Config.train_metadata_name)):
+        converter = Converter(device)
+        
+        input_dir = config.input_dir
+        output_dir = config.data_dir
+        output_file = Config.train_metadata_name
+        _ = converter.generate_train_data(input_dir, output_dir, output_file)
             
     main(config, device)
