@@ -96,7 +96,7 @@ class Converter:
         
         return S
     
-    def _wav_dir_to_spec_dir(self, input_dir, output_dir, speakers=None, introduce_noise=False):
+    def _wav_dir_to_spec_dir(self, input_dir, output_dir, speakers=None, introduce_noise=False, skip_existing = True):
         """Convert wav files in folder `input_dir` to a mel spectrogram, then puts them (numpy 2d spectrograms) in `output_dir`
 
         Args:
@@ -124,12 +124,18 @@ class Converter:
             spects[speaker] = {}
             #prng = RandomState(int(subdir[1:])) 
             for fileName in sorted(fileList):
-                wav_path = os.path.join(input_dir, speaker, fileName)
-                x, sr = sf.read(wav_path)
-                S = self._wav_to_spec(x, sr, wav_path, introduce_noise)
+                save_name = os.path.join(output_dir, speaker, fileName[:-4]) + ".npy"
+                if skip_existing and os.path.exists(save_name): #if skip existing is set to true, and result already exists
+                    log.info(f"Loading spectrogram of {fileName} from {save_name} ")
+                    S = np.load(save_name) #Reload predefined spect #TODO: skip load
+                else:
+                    log.info(f"Spect of {fileName} does not yet exist at: {save_name} ")
+                    wav_path = os.path.join(input_dir, speaker, fileName)
+                    x, sr = sf.read(wav_path)
+                    S = self._wav_to_spec(x, sr, wav_path, introduce_noise)
 
-                # Save spectrogram    
-                np.save(os.path.join(output_dir, speaker, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
+                    # Save spectrogram    
+                    np.save(save_name, S.astype(np.float32), allow_pickle=False)
                 spects[speaker][fileName[:-4]] = S.astype(np.float32)
                 
         print("Converted input files to spectrograms...")
@@ -156,11 +162,9 @@ class Converter:
             
             spects[speaker] = {}
             for file in fileList:
-                if "emb" not in file:
-                    spect = np.load(os.path.join(dirName, speaker, file))
-                    spects[speaker][file[:-4]] = spect
+                spect = np.load(os.path.join(dirName, speaker, file))
+                spects[speaker][file[:-4]] = spect
         
-        # print(spects["p225"])
         return spects
                 
         
@@ -207,13 +211,14 @@ class Converter:
         return metadata
 
 
-    def _spec_to_embedding(self, output_dir, input_data=None, input_dir=None): 
+    def _spec_to_embedding(self, output_dir, input_data, skip_existing = True): 
         """Generates speaker embeddings from spectograms from internal memory or a directory
 
         Args:
             output_dir (str): Path to output directory
             input_data (list], optional): Spectogram from internal memory. Defaults to None.
             input_dir (str, optional): Path to input directory. Defaults to None. Should contain files of each np.save'd spectrogram 
+            skip_existing (bool): Whether output dir should be checked for output name first, if output already exists, load entry and skip processing
 
         Returns:
             list: List of speaker embeddings of the form:
@@ -239,20 +244,25 @@ class Converter:
         #TODO: use existing embedding if file exists?
         
         num_uttrs = 10 # TODO: Why not just use all files?
-        len_crop = 10000
+        len_crop = 128
         
-        if input_data is not None:
-            spects = input_data
-        elif input_dir is not None:
-            print("Loading")
-            spects = self._load_spec_data(input_dir)
+        # if input_data is not None:
+        spects = input_data
+        # elif input_dir is not None:
+        #     spects = self._load_spec_data(input_dir)
 
         speaker_embeddings = {}
         for speaker in sorted(spects.keys()):
-            log.info('Processing speaker: %s' % speaker)
             
+            save_path = os.path.join(output_dir, speaker, "{}_emb".format(speaker)) + ".npy"
+            if skip_existing and os.path.exists(save_path):
+                log.info(f'Embedding - loading from file for speaker: {speaker} ({save_path})')
+                speaker_embeddings[speaker] = np.load(save_path, allow_pickle=False) 
+                continue
+            else:
+                log.info(f'Embedding - Processing speaker: {speaker}')
+
             utterances_list = spects[speaker]
-            
             # make speaker embedding
             assert len(utterances_list) >= num_uttrs 
             idx_uttrs = np.random.choice(len(utterances_list), size=num_uttrs, replace=False)
@@ -265,14 +275,11 @@ class Converter:
                 candidates = np.delete(np.arange(len(utterances_list)), idx_uttrs[i])
                 
                 # choose another utterance if the current one is too short
-                while spect.shape[0] < len_crop + 1:
+                while spect.shape[0] < len_crop:
                     idx_alt = np.random.choice(candidates)
                     file = list(utterances_list.keys())[idx_alt]
                     spect = utterances_list[file]
                     candidates = np.delete(candidates, np.argwhere(candidates==idx_alt))
-                
-                if spect.shape[0] <= len_crop:
-                    print(file)  
                     
                 left = np.random.randint(0, spect.shape[0]-len_crop)
                 melsp = torch.from_numpy(spect[np.newaxis, left:left+len_crop, :]).to(self._device)
@@ -281,8 +288,8 @@ class Converter:
             
             speaker_embeddings[speaker] = np.mean(embs, axis=0)
             
-            np.save(os.path.join(output_dir, speaker, "{}_emb".format(speaker)), 
-                                 speaker_embeddings[speaker], allow_pickle=False)
+            np.save(save_path, 
+                    speaker_embeddings[speaker], allow_pickle=False)
                
             
         print("Extracted speaker embeddings...")
@@ -311,10 +318,10 @@ class Converter:
         speakers = [source, target]
         
         # Convert audio to spectrograms
-        spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers)
+        spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=True)
         
         # Generate speaker embeddings
-        embeddings = self._spec_to_embedding(spec_dir, input_data=spects)
+        embeddings = self._spec_to_embedding(spec_dir, spects, skip_existing=True) 
         
         # Create conversion metadata
         metadata = self._create_metadata(spec_dir, source, target, source_list)
