@@ -156,9 +156,11 @@ class Converter:
             
             spects[speaker] = {}
             for file in fileList:
-                spect = np.load(os.path.join(dirName, speaker, file))
-                spects[speaker][file[:-4]] = spect
+                if "emb" not in file:
+                    spect = np.load(os.path.join(dirName, speaker, file))
+                    spects[speaker][file[:-4]] = spect
         
+        # print(spects["p225"])
         return spects
                 
         
@@ -242,6 +244,7 @@ class Converter:
         if input_data is not None:
             spects = input_data
         elif input_dir is not None:
+            print("Loading")
             spects = self._load_spec_data(input_dir)
 
         speaker_embeddings = {}
@@ -262,11 +265,14 @@ class Converter:
                 candidates = np.delete(np.arange(len(utterances_list)), idx_uttrs[i])
                 
                 # choose another utterance if the current one is too short
-                while spect.shape[0] < len_crop:
+                while spect.shape[0] < len_crop + 1:
                     idx_alt = np.random.choice(candidates)
                     file = list(utterances_list.keys())[idx_alt]
                     spect = utterances_list[file]
                     candidates = np.delete(candidates, np.argwhere(candidates==idx_alt))
+                
+                if spect.shape[0] <= len_crop:
+                    print(file)  
                     
                 left = np.random.randint(0, spect.shape[0]-len_crop)
                 melsp = torch.from_numpy(spect[np.newaxis, left:left+len_crop, :]).to(self._device)
