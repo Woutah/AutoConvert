@@ -9,7 +9,7 @@ class Config:
         "input" : "./input",
         "output" : "./output",
         "metadata" : "./metadata",
-        "spectrograms" : "./spectrograms"
+        "spectrograms" : "./spectrograms",
     }
     
     pretrained_names = {
@@ -18,7 +18,8 @@ class Config:
         "vocoder" : "checkpoint_step001000000_ema.pth"
     }
     
-    metadata_name = "metadata.pkl"
+    convert_metadata_name = "metadata.pkl"
+    train_metadata_name = "train.pkl"
     
     audio_sr = 16000
     

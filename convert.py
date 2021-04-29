@@ -27,6 +27,8 @@ parser.add_argument("--target", default=None,
                     help="Target speaker folder")
 parser.add_argument("--source_wav", nargs='+', default=None,
                     help="Source speaker utterance")
+parser.add_argument("--model_path", type=str, default=os.path.join(Config.dir_paths["networks"], Config.pretrained_names["autovc"]),
+                    help="Path to trained AutoVC model")
 args = parser.parse_args()
 
 
@@ -37,13 +39,13 @@ def pad_seq(x, base=32):
     return np.pad(x, ((0,len_pad),(0,0)), 'constant'), len_pad
 
 
-def inference(output_dir, device, input_dir=None, input_data=None):
-    network_path = os.path.join(Config.dir_paths["networks"], Config.pretrained_names["autovc"])   
-    
+def inference(output_dir, device, model_path, input_dir=None, input_data=None): 
     # Define AutoVC model
     G = Generator(32,256,512,32).eval().to(device)
-    g_checkpoint = torch.load(network_path, map_location=device) 
+    g_checkpoint = torch.load(model_path, map_location=device) 
     G.load_state_dict(g_checkpoint['model'])
+    
+    print("Using model {}".format(model_path))
         
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)    
@@ -112,7 +114,7 @@ source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
 input_dir = Config.dir_paths["input"]
 converted_data_dir = Config.dir_paths["metadata"]
 output_file_dir = Config.dir_paths["output"]
-metadata_name = Config.metadata_name
+metadata_name = Config.convert_metadata_name
 
 if not os.path.isdir(os.path.join(input_dir, source_speaker)):
     print("Didn't find a {} folder in the {} folder".format(source_speaker, input_dir))
@@ -132,8 +134,8 @@ if device.type == "cuda":
 
 converter = Converter(device)
 
-input_data = converter.wav_to_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name)
+input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name)
 
-output_data = inference(output_file_dir, device, input_data=input_data)
+output_data = inference(output_file_dir, device, args.model_path, input_data=input_data)
 
 converter.output_to_wav(output_data)
