@@ -53,7 +53,7 @@ class Converter:
         return np.abs(result)
     
     
-    def _wav_to_spec(self, wav, sample_rate, wav_path, introduce_noise = False):
+    def _wav_to_spec(self, wav, sample_rate, wav_path, introduce_noise=False):
         """Convert wav file to a mel spectrogram
 
         Args:
@@ -83,7 +83,7 @@ class Converter:
         # add a little random noise for model robustness
         if introduce_noise:
             log.info(f"Introducing random noise into wav.file")
-            prng = RandomState() #TODO: should this be the same each time?
+            prng = RandomState(42) #TODO: should this be the same each time?
             wav = wav * 0.96 + (prng.rand(wav.shape[0])-0.5)*1e-06
         
 
@@ -96,7 +96,7 @@ class Converter:
         
         return S
     
-    def _wav_dir_to_spec_dir(self, input_dir, output_dir, speakers=None):
+    def _wav_dir_to_spec_dir(self, input_dir, output_dir, speakers=None, introduce_noise=False):
         """Convert wav files in folder `input_dir` to a mel spectrogram
 
         Args:
@@ -126,7 +126,7 @@ class Converter:
             for fileName in sorted(fileList):
                 wav_path = os.path.join(input_dir, speaker, fileName)
                 x, sr = sf.read(wav_path)
-                S = self._wav_to_spec(x, sr, wav_path)
+                S = self._wav_to_spec(x, sr, wav_path, introduce_noise)
 
                 # Save spectrogram    
                 np.save(os.path.join(output_dir, speaker, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
@@ -353,7 +353,7 @@ class Converter:
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
    
-        spects = self._wav_dir_to_spec_dir(input_dir, output_dir)
+        spects = self._wav_dir_to_spec_dir(input_dir, output_dir, introduce_noise=True) # TODO: noise for training data?
         embeddings = self._spec_to_embedding(output_dir, input_data=spects)
         metadata = self._make_train_metadata(output_dir, embeddings)
         
