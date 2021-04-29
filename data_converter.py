@@ -237,7 +237,7 @@ class Converter:
         #TODO: use existing embedding if file exists?
         
         num_uttrs = 10 # TODO: Why not just use all files?
-        len_crop = 128
+        len_crop = 10000
         
         if input_data is not None:
             spects = input_data
