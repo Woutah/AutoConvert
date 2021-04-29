@@ -355,7 +355,7 @@ class Converter:
             os.mkdir(output_dir)
    
         spects = self._wav_dir_to_spec_dir(input_dir, output_dir, introduce_noise=True) # TODO: noise for training data?
-        embeddings = self._spec_to_embedding(output_dir, input_data=spects)
+        embeddings = self._spec_to_embedding(output_dir, input_dir=output_dir)
         metadata = self._make_train_metadata(output_dir, embeddings)
         
         with open(os.path.join(output_dir, output_file), 'wb') as handle:
