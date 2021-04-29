@@ -130,7 +130,9 @@ class Solver(object):
                 print(log)
                 
             if (i+1) % self.save_freq == 0:
-                torch.save(self.G, os.path.join(self.checkpoint_dir, "autovc_{}".format(i+1)))
+                torch.save({
+                            "model" : self.G.state_dict(), 
+                            }, os.path.join(self.checkpoint_dir, "autovc_{}.ckpt".format(i+1)))
                 
 
     

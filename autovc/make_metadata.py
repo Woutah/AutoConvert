@@ -54,6 +54,8 @@ for speaker in sorted(subdirList):
         utterances.append(os.path.join(speaker,fileName))
     speakers.append(utterances)
     
+print(speakers)
+    
 with open(os.path.join(rootDir, 'train.pkl'), 'wb') as handle:
     pickle.dump(speakers, handle)
 

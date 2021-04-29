@@ -9,6 +9,8 @@ output
 autovc/spmel
 train_input
 autovc/train_wavs
+train
+checkpoints
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
