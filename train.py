@@ -21,7 +21,7 @@ def main(config, device):
     cudnn.benchmark = True
 
     # Data loader.
-    vcc_loader = get_loader(config.data_dir, config.batch_size, config.len_crop)
+    vcc_loader = get_loader(config.data_dir, config.batch_size, config.len_crop, crop_range=config.crop_range)
     
     solver = Solver(vcc_loader, config, device)
 
@@ -42,13 +42,14 @@ if __name__ == '__main__':
     
     # Training configuration.
     parser.add_argument('--model_path', type=str, default=None)
-    parser.add_argument('--input_dir', type=str, default='./train_input')
+    parser.add_argument('--input_dir', type=str, default='./train_input')#.wav file dir of with structure: `input_dir`/speaker_name/wavname1.wav  (etc.)
     parser.add_argument('--data_dir', type=str, default='./train')
     parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints')
     parser.add_argument('--batch_size', type=int, default=2, help='mini-batch size')
     parser.add_argument('--num_iters', type=int, default=1000000, help='number of total iterations')
     parser.add_argument('--len_crop', type=int, default=128, help='dataloader output sequence length')
-    parser.add_argument('--save_freq', type=int, default=10000)
+    parser.add_argument('--save_freq', type=int, default=1000)
+    parser.add_argument('--crop_range', type=tuple, default=None)
     
     # Miscellaneous.
     parser.add_argument('--log_step', type=int, default=10)

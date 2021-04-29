@@ -15,7 +15,7 @@ np.random.seed(42)
 parser = argparse.ArgumentParser(description='Preprocess VCTK dataset')
 parser.add_argument("input", default=None,
                     help="Source speaker folder")
-parser.add_argument("output", default=None,
+parser.add_argument("output", default="./",
                     help="Source speaker folder")
 args = parser.parse_args()
 

@@ -97,7 +97,7 @@ class Converter:
         return S
     
     def _wav_dir_to_spec_dir(self, input_dir, output_dir, speakers=None, introduce_noise=False):
-        """Convert wav files in folder `input_dir` to a mel spectrogram
+        """Convert wav files in folder `input_dir` to a mel spectrogram, then puts them (numpy 2d spectrograms) in `output_dir`
 
         Args:
             input_dir (str): Path to input directory
@@ -211,10 +211,16 @@ class Converter:
         Args:
             output_dir (str): Path to output directory
             input_data (list], optional): Spectogram from internal memory. Defaults to None.
-            input_dir (str, optional): Path to input directory. Defaults to None.
+            input_dir (str, optional): Path to input directory. Defaults to None. Should contain files of each np.save'd spectrogram 
 
         Returns:
-            list: List of speaker embeddings
+            list: List of speaker embeddings of the form:
+                {
+                    #'speaker' : emedding
+                    'p225': array([ 0.00812339, ...e=float32),
+                    'p226': .... etc. 
+                }
+            
         """
         # Load speaker encoder
         network_dir = Config.dir_paths["networks"]
@@ -318,7 +324,7 @@ class Converter:
 
         Args:
             spects_dir (str): Path to spectogram folder
-            embeddings (dict): Dictionary of speaker embeddings
+            embeddings (dict): Dictionary of speaker embeddings output from 
 
         Returns:
             list: Train metadata. See README.md for format
@@ -343,7 +349,25 @@ class Converter:
  
  
     def generate_train_data(self, input_dir, output_dir, output_file):
-        """Preprocesses input data for training
+        """Preprocesses input data for training, then output to `output_dir` (pickled) as a dict of form:
+            {
+                "source" : {
+                    "speaker1" : {
+                        "emb" : <speaker_embedding []>
+                        "utterances" : {
+                            "utterance1" : [ <part1 []>, ... , <partn []> ]
+                            ...
+                        }
+                    }
+                    ...
+                }
+                "target" : {
+                    "speaker1" : {
+                        "emb" : <speaker_embedding []>
+                    }
+                    ...
+                }
+            }
 
         Args:
             input_dir (str): Path to input folder containing wav files
