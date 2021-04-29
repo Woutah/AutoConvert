@@ -9,7 +9,7 @@ import os
 
 class Solver(object):
 
-    def __init__(self, vcc_loader, config):
+    def __init__(self, vcc_loader, config, device):
         """Initialize configurations."""
 
         # Data loader.
@@ -28,7 +28,7 @@ class Solver(object):
         
         # Miscellaneous.
         self.use_cuda = torch.cuda.is_available()
-        self.device = torch.device('cuda:0' if self.use_cuda else 'cpu')
+        self.device = device
         self.log_step = config.log_step
         self.save_freq = config.save_freq
         self.checkpoint_dir= config.checkpoint_dir

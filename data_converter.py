@@ -53,12 +53,13 @@ class Converter:
         return np.abs(result)
     
     
-    def _wav_to_spec(self, wavfile, sample_rate, introduce_noise = False):
+    def _wav_to_spec(self, wav, sample_rate, wav_path, introduce_noise = False):
         """Convert wav file to a mel spectrogram
 
         Args:
-            wavfile (numpy array): audio data either 1-d (mono) or 2-d (stereo)
+            wav (numpy array): audio data either 1-d (mono) or 2-d (stereo)
             sample_rate (int): the sampling rate of the .wav (sf.read[1])
+            wav_path (str): Path original wav file
             note that these two variables can be loaded using: 
                 wavfile, sample_rate = sf.read(os.path.join(input_dir, speaker, fileName))
 
@@ -70,20 +71,21 @@ class Converter:
         min_level = np.exp(-100 / 20 * np.log(10))
         b, a = self._butter_highpass(30, 16000, order=5)
 
-        #dirName, subdirList, _ = next(os.walk(input_dir)) 
-        
+        # Resample wav if needed
         if sample_rate != Config.audio_sr:
-            wavfile = librosa.resample(wavfile, sample_rate, Config.audio_sr)
+            wav = librosa.resample(wav, sample_rate, Config.audio_sr)
             print("resampled to {}".format(Config.audio_sr))
+            sf.write(wav_path, wav, 16000) # Write downsampled file
         
         # Remove drifting noise
-        wav = signal.filtfilt(b, a, wavfile)
+        wav = signal.filtfilt(b, a, wav)
 
+        # add a little random noise for model robustness
         if introduce_noise:
             log.info(f"Introducing random noise into wav.file")
             prng = RandomState() #TODO: should this be the same each time?
             wav = wav * 0.96 + (prng.rand(wav.shape[0])-0.5)*1e-06
-        # add a little random noise for model robustness
+        
 
         # Compute spectrogram
         D = self._pySTFT(wav).T
@@ -122,8 +124,9 @@ class Converter:
             spects[speaker] = {}
             #prng = RandomState(int(subdir[1:])) 
             for fileName in sorted(fileList):
-                x, sr = sf.read(os.path.join(input_dir, speaker, fileName))
-                S = self._wav_to_spec(x, sr)
+                wav_path = os.path.join(input_dir, speaker, fileName)
+                x, sr = sf.read(wav_path)
+                S = self._wav_to_spec(x, sr, wav_path)
 
                 # Save spectrogram    
                 np.save(os.path.join(output_dir, speaker, fileName[:-4]), S.astype(np.float32), allow_pickle=False)
@@ -310,6 +313,15 @@ class Converter:
     
  
     def _make_train_metadata(self, spects_dir, embeddings):
+        """Creates train metadata
+
+        Args:
+            spects_dir (str): Path to spectogram folder
+            embeddings (dict): Dictionary of speaker embeddings
+
+        Returns:
+            list: Train metadata. See README.md for format
+        """
         speakers = []
 
         for speaker in embeddings.keys():
@@ -330,6 +342,13 @@ class Converter:
  
  
     def generate_train_data(self, input_dir, output_dir, output_file):
+        """Preprocesses input data for training
+
+        Args:
+            input_dir (str): Path to input folder containing wav files
+            output_dir (str): Path to train folder to contain spectograms and metadata files
+            output_file (str): Name of the metadata file
+        """
         
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
@@ -340,9 +359,6 @@ class Converter:
         
         with open(os.path.join(output_dir, output_file), 'wb') as handle:
             pickle.dump(metadata, handle)
-        
-   
-
  
  
     def output_to_wav(self, output_data):

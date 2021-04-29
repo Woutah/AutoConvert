@@ -16,14 +16,14 @@ from config import Config
 def str2bool(v):
     return v.lower() in ('true')
 
-def main(config):
+def main(config, device):
     # For fast training.
     cudnn.benchmark = True
 
     # Data loader.
     vcc_loader = get_loader(config.data_dir, config.batch_size, config.len_crop)
     
-    solver = Solver(vcc_loader, config)
+    solver = Solver(vcc_loader, config, device)
 
     solver.train()
         
@@ -65,7 +65,5 @@ if __name__ == '__main__':
     output_dir = config.data_dir
     output_file = Config.train_metadata_name
     _ = converter.generate_train_data(input_dir, output_dir, output_file)
-        
-    
-        
-    main(config)
+            
+    main(config, device)
