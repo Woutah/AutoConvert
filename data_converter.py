@@ -253,7 +253,7 @@ class Converter:
                 file = list(utterances_list.keys())[idx_uttrs[i]]
                 spect = utterances_list[file]
                 
-                candidates = np.delete(np.arange(len(utterances_list)), idx_uttrs)
+                candidates = np.delete(np.arange(len(utterances_list)), idx_uttrs[i])
                 
                 # choose another utterance if the current one is too short
                 while spect.shape[0] < len_crop:
