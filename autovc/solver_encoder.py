@@ -145,7 +145,7 @@ class Solver(object):
                             'optimizer': self.g_optimizer.state_dict(),
                             "steps" : self.start_step+i,
                             "loss" : loss
-                            }, os.path.join(self.checkpoint_dir, "autovc_{}.ckpt".format(i+1)))
+                            }, os.path.join(self.checkpoint_dir, "autovc_{}.ckpt".format(self.start_step+i+1)))
                 
 
     
