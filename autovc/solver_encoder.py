@@ -37,6 +37,8 @@ class Solver(object):
         self.build_model()
         self.model_path = config.model_path
         
+        self.start_step = 0
+        
         if self.model_path is not None:
             g_checkpoint = torch.load(self.model_path, map_location=self.device) 
             self.G.load_state_dict(g_checkpoint['model'])
@@ -45,6 +47,9 @@ class Solver(object):
                 self.g_optimizer.load_state_dict(g_checkpoint["optimizer"])
             else:
                 print("WARNING: didn't load optimizer state!!!")
+                
+            if "steps" in g_checkpoint.keys():
+                self.start_step = g_checkpoint["steps"]
 
             
     def build_model(self):
@@ -129,7 +134,7 @@ class Solver(object):
             if (i+1) % self.log_step == 0:
                 et = time.time() - start_time
                 et = str(datetime.timedelta(seconds=et))[:-7]
-                log = "Elapsed [{}], Iteration [{}/{}]".format(et, i+1, self.num_iters)
+                log = "Elapsed [{}], Iteration [{}/{}]".format(et, self.start_step+i+1, self.num_iters)
                 for tag in keys:
                     log += ", {}: {:.4f}".format(tag, loss[tag])
                 print(log)
@@ -137,7 +142,9 @@ class Solver(object):
             if (i+1) % self.save_freq == 0:
                 torch.save({
                             "model" : self.G.state_dict(), 
-                            'optimizer': self.g_optimizer.state_dict()
+                            'optimizer': self.g_optimizer.state_dict(),
+                            "steps" : self.start_step+i,
+                            "loss" : loss
                             }, os.path.join(self.checkpoint_dir, "autovc_{}.ckpt".format(i+1)))
                 
 
