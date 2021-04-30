@@ -265,7 +265,7 @@ class Converter:
                 candidates = np.delete(np.arange(len(utterances_list)), idx_uttrs[i])
                 
                 # choose another utterance if the current one is too short
-                while spect.shape[0] < len_crop + 1:
+                while spect.shape[0] < len_crop:
                     idx_alt = np.random.choice(candidates)
                     file = list(utterances_list.keys())[idx_alt]
                     spect = utterances_list[file]
@@ -274,7 +274,7 @@ class Converter:
                 if spect.shape[0] <= len_crop:
                     print(file)  
                     
-                left = np.random.randint(0, spect.shape[0]-len_crop)
+                left = np.random.randint(0, spect.shape[0]-len_crop+1)
                 melsp = torch.from_numpy(spect[np.newaxis, left:left+len_crop, :]).to(self._device)
                 emb = speaker_encoder(melsp)
                 embs.append(emb.detach().squeeze().cpu().numpy())     

@@ -40,6 +40,11 @@ class Solver(object):
         if self.model_path is not None:
             g_checkpoint = torch.load(self.model_path, map_location=self.device) 
             self.G.load_state_dict(g_checkpoint['model'])
+            
+            if "optimizer" in g_checkpoint.keys():
+                self.g_optimizer.load_state_dict(g_checkpoint["optimizer"])
+            else:
+                print("WARNING: didn't load optimizer state!!!")
 
             
     def build_model(self):
@@ -132,6 +137,7 @@ class Solver(object):
             if (i+1) % self.save_freq == 0:
                 torch.save({
                             "model" : self.G.state_dict(), 
+                            'optimizer': self.g_optimizer.state_dict()
                             }, os.path.join(self.checkpoint_dir, "autovc_{}.ckpt".format(i+1)))
                 
 
