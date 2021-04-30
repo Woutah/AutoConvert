@@ -79,7 +79,7 @@ class Converter:
         
         # Remove drifting noise
         wav = signal.filtfilt(b, a, wav)
-
+ 
         # add a little random noise for model robustness
         if introduce_noise:
             log.info(f"Introducing random noise into wav.file")
