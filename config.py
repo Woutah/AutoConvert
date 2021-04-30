@@ -24,6 +24,13 @@ class Config:
     train_metadata_name = "train.pkl"
     
     audio_sr = 16000
-    
+    n_fft = 1024
+    win_length = 1024
+    hop_length = 256
+    n_mels = 80
+    fmin = 90
+    fmax = 7600
+    ref_level_db = 16
+    min_level_db = -100
     
     

@@ -18,7 +18,11 @@ from numpy.random import RandomState
 from autovc.model_bl import D_VECTOR
 from autovc.synthesis import build_model, build_model_melgan, wavegen, melgan
 from config import Config
-import cv2
+
+from parallel_wavegan.utils import read_hdf5
+from sklearn.preprocessing import StandardScaler
+import yaml
+from parallel_wavegan.bin.preprocess import logmelfilterbank
 
 log = logging.getLogger(__name__)
 
@@ -400,6 +404,38 @@ class Converter:
         with open(os.path.join(output_dir, output_file), 'wb') as handle:
             pickle.dump(metadata, handle)
  
+    
+    def preprocess_melgan(self, mel):
+        with open("melgan/vctk_parallel_wavegan.v1/config.yml") as f:
+            config = yaml.load(f, Loader=yaml.Loader)
+        stats = "melgan/vctk_parallel_wavegan.v1/stats.h5"
+        
+        lin_out = librosa.feature.inverse.mel_to_stft(mel, sr=Config.audio_sr, n_fft=Config.n_fft, fmin=Config.fmin, fmax=Config.fmax) 
+
+        # Use MelGan mel format 
+        mel_out = logmelfilterbank(lin_out,
+                                    sampling_rate=config["sampling_rate"],
+                                    hop_size=config["hop_size"],
+                                    fft_size=config["fft_size"],
+                                    win_length=config["win_length"],
+                                    window=config["window"],
+                                    num_mels=config["num_mels"],
+                                    fmin=config["fmin"],
+                                    fmax=config["fmax"])
+
+        # Normalize melgan mel spect
+        scaler = StandardScaler()
+        if config["format"] == "hdf5":
+            scaler.mean_ = read_hdf5(stats, "mean")
+            scaler.scale_ = read_hdf5(stats, "scale")
+        elif config["format"] == "npy":
+            scaler.mean_ = np.load(stats)[0]
+            scaler.scale_ = np.load(stats)[1]
+
+        mel_out = scaler.transform(mel_out)
+        
+        return mel_out
+ 
  
     def output_to_wav(self, output_data):
         """Convert mel spectograms to audio files
@@ -418,34 +454,26 @@ class Converter:
             print(name)
             # TODO: enable this for wavenet conversion
             #------------------------------------------------
+            # c = spect[1]
+            # print(c.shape)
+            # waveform = wavegen(model, self._device, c=c)
+            #------------------------------------------------
+            
+            # TODO: enable this for melgan conversion
+            #------------------------------------------------
             c = spect[1]
             # c = cv2.resize(c, None, fx=1.0, fy=24000.0/16000.0, interpolation=cv2.INTER_AREA)
-            print(c.shape)
-            waveform = wavegen(model, self._device, c=c)
+            # print(c.shape)
+            # c = self.preprocess_melgan(c)
             # waveform = melgan(model, self._device, c)
             #------------------------------------------------
             
             # TODO: enable this for librosa conversion
             #------------------------------------------------
-            # import librosa
-            # c = spect[1].T
-            # import matplotlib.pyplot as plt
-            # import librosa.display
-            # plt.figure(figsize=(10, 4))
-            # c = (np.clip(c, 0, 1) * - -100) + 100 # https://github.com/auspicious3000/autovc/issues/14 I suspect other values are used in the AutoVC code but it seems to somewhat work
-            # #c = np.power(10.0, c * 0.05)
-            # c = librosa.db_to_amplitude(c, ref=20)
-            
-            # librosa.display.specshow(librosa.power_to_db(c, ref=np.max),
-            # 						y_axis='mel', fmax=7600,
-            # 						x_axis='time')
-            # plt.colorbar(format='%+2.0f dB')
-            # plt.title('Mel spectrogram')
-            # plt.tight_layout()
-            # plt.show()
-            
-            # waveform = librosa.feature.inverse.mel_to_audio(c, sr=16000, n_fft=1024, hop_length=256)
-            # name += "_librosa"
+            c = spect[1]
+            lin_out = librosa.feature.inverse.mel_to_stft(c, sr=Config.audio_sr, n_fft=Config.n_fft, fmin=Config.fmin, fmax=Config.fmax) 
+            waveform = librosa.griffinlim(lin_out, win_length=Config.win_length, hop_length=Config.hop_length)
+            name += "_librosa"
             #--------------------------------------------------
             
             sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 16000)

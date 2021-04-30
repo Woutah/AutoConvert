@@ -91,8 +91,7 @@ def _amp_to_db(x):
     min_level = np.exp(min_level_db / 20 * np.log(10))
     return 20 * np.log10(np.maximum(min_level, x))
 
-def _db_to_amp(x):
-    return np.power(10.0, x * 0.05)
+
 
 def normalize_for_VC(mel):
     # assume magnitude melspectrum with correct sr/fmin/fmax as input
@@ -101,6 +100,9 @@ def normalize_for_VC(mel):
     return mel.T
 
 def denormalize_from_VC(mel):
+    def _db_to_amp(x):
+        return np.power(10.0, x * 0.05)
+    
     mel = (np.clip(mel, 0, 1) * -min_level_db) + min_level_db
     mel = _db_to_amp(mel + ref_level_db)
     return mel.T
@@ -142,28 +144,36 @@ embed_out = spkr_to_embed["p225"]
 audio_in, _ = librosa.load("train_input/p225/p225_001.wav", sr=sr)
 
 # Make mel spect
-lin_in = np.abs(librosa.stft(audio_in, n_fft=n_fft, win_length=win_length, hop_length=hop_length))
-mel_in = librosa.feature.melspectrogram(S=lin_in, sr=sr, n_fft=n_fft, fmin=fmin, fmax=fmax, n_mels=n_mels) 
+# lin_in = np.abs(librosa.stft(audio_in, n_fft=n_fft, win_length=win_length, hop_length=hop_length))
+# mel_in = librosa.feature.melspectrogram(S=lin_in, sr=sr, n_fft=n_fft, fmin=fmin, fmax=fmax, n_mels=n_mels) 
+mel_in = np.load("spectrograms/p225/p225_001.npy").T
 mel_out = mel_in
 
 # process by autoVC
 mel_in = normalize_for_VC(mel_in)
 mel_no_PN, mel_yes_PN = apply_autoVC(mel_in, embed_in, embed_out)
-mel_out = denormalize_from_VC(mel_yes_PN)
+mel_out = denormalize_from_VC(mel_yes_PN).T
 
 # Revert to fft
-lin_out = librosa.feature.inverse.mel_to_stft(mel_out, sr=sr, n_fft=n_fft, fmin=fmin, fmax=fmax) 
+# lin_out = librosa.feature.inverse.mel_to_stft(mel_out, sr=sr, n_fft=n_fft, fmin=fmin, fmax=fmax)
+
+# audio = librosa.griffinlim(lin_out, win_length=win_length, hop_length=hop_length)
 
 # Use MelGan mel format 
-mel_out = logmelfilterbank(audio_in,
-                               sampling_rate=sampling_rate,
-                               hop_size=hop_size,
-                               fft_size=config["fft_size"],
-                               win_length=config["win_length"],
-                               window=config["window"],
-                               num_mels=config["num_mels"],
-                               fmin=config["fmin"],
-                               fmax=config["fmax"])
+# mel_out = logmelfilterbank(audio,
+#                                sampling_rate=sampling_rate,
+#                                hop_size=hop_size,
+#                                fft_size=config["fft_size"],
+#                                win_length=config["win_length"],
+#                                window=config["window"],
+#                                num_mels=config["num_mels"],
+#                                fmin=config["fmin"],
+#                                fmax=config["fmax"])
+# eps=1e-10
+
+# mel_basis = librosa.filters.mel(sr, n_fft, config["num_mels"], config["fmin"], config["fmax"])
+
+# mel_out = np.log10(np.maximum(eps, np.dot(lin_out, mel_basis.T)))
 
 # Normalize melgan mel spect
 scaler = StandardScaler()

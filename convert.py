@@ -31,6 +31,13 @@ parser.add_argument("--model_path", type=str, default=os.path.join(Config.dir_pa
                     help="Path to trained AutoVC model")
 args = parser.parse_args()
 
+def denormalize_from_VC(mel):
+    def _db_to_amp(x):
+        return np.power(10.0, x * 0.05)
+    
+    mel = (np.clip(mel, 0, 1) * -Config.min_level_db) + Config.min_level_db
+    mel = _db_to_amp(mel + Config.ref_level_db)
+    return mel.T
 
 def pad_seq(x, base=32):
     len_out = int(base * ceil(float(x.shape[0])/base))
@@ -92,7 +99,7 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None):
                     # ax[0].imshow(np.swapaxes(uttr_trg, 0, 1))
                     # ax[1].imshow(np.swapaxes(uttr_total, 0, 1))
                     # plt.show()
-                        
+                uttr_total = denormalize_from_VC(uttr_total)
                 spect_vc.append( ('{}x{}'.format(utterance_i, speaker_j), uttr_total))
 
 
