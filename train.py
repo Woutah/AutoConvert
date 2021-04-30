@@ -11,7 +11,9 @@ import torch
 from data_converter import Converter
 
 from config import Config
-
+import logging
+logging.basicConfig(level=logging.INFO) 
+log = logging.getLogger(__name__)
 
 def str2bool(v):
     return v.lower() in ('true')
