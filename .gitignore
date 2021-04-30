@@ -12,6 +12,7 @@ autovc/train_wavs
 train
 checkpoints
 melgan
+sample
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

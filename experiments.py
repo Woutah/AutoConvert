@@ -16,6 +16,8 @@ from autovc.model_vc import Generator
 from config import Config
 from data_converter import Converter
 
+from autovc.synthesis import build_model_melgan, melgan
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -32,9 +34,15 @@ converter = Converter(device)
 # ax[0].set_title("Wouter")
 
 x, sr = sf.read(utility.get_full_path(".\\input\\p225\\p225_001.wav"))
-spec_225 = converter._wav_to_spec(x, sr)
+spec_225 = converter._wav_to_spec(x, sr,  utility.get_full_path(".\\input\\p225\\p225_001.wav"))
 # ax[1].imshow(np.swapaxes(spec_225, 0, 1))
 # ax[1].set_title("225")
+
+model = build_model_melgan().to("cuda")
+
+out = melgan(model, "cuda", spec_225)
+
+sf.write("output/test.wav", out, 24000)
 
 
 
