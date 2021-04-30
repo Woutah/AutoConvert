@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=2, help='mini-batch size')
     parser.add_argument('--num_iters', type=int, default=1000000, help='number of total iterations')
     parser.add_argument('--len_crop', type=int, default=128, help='dataloader output sequence length')
-    parser.add_argument('--save_freq', type=int, default=1000)
+    parser.add_argument('--save_freq', type=int, default=10000)
     parser.add_argument('--crop_range', type=tuple, default=None)
     
     # Miscellaneous.

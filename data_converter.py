@@ -281,7 +281,7 @@ class Converter:
                     spect = utterances_list[file]
                     candidates = np.delete(candidates, np.argwhere(candidates==idx_alt))
                     
-                left = np.random.randint(0, spect.shape[0]-len_crop)
+                left = np.random.randint(0, spect.shape[0]-len_crop+1)
                 melsp = torch.from_numpy(spect[np.newaxis, left:left+len_crop, :]).to(self._device)
                 emb = speaker_encoder(melsp)
                 embs.append(emb.detach().squeeze().cpu().numpy())     
