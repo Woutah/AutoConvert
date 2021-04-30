@@ -26,6 +26,8 @@ from parallel_wavegan.bin.preprocess import logmelfilterbank
 
 log = logging.getLogger(__name__)
 
+
+
 class Converter:
     """
     Convert audio data to and from the AutoVC format
@@ -59,20 +61,20 @@ class Converter:
         return np.abs(result)
     
     
-    def _wav_to_spec(self, wav, sample_rate, wav_path, introduce_noise=False):
+    def _wav_to_spec(self, wav, sample_rate, wav_path = None, introduce_noise=False):
         """Convert wav file to a mel spectrogram
 
         Args:
             wav (numpy array): audio data either 1-d (mono) or 2-d (stereo)
             sample_rate (int): the sampling rate of the .wav (sf.read[1])
-            wav_path (str): Path original wav file
+            wav_path (str): Path to original wav file
             note that these two variables can be loaded using: 
                 wavfile, sample_rate = sf.read(os.path.join(input_dir, speaker, fileName))
 
         Returns:
             np.array: Mel spectrogram
         """
-        
+
         mel_basis = mel(16000, 1024, fmin=90, fmax=7600, n_mels=80).T
         min_level = np.exp(-100 / 20 * np.log(10))
         b, a = self._butter_highpass(30, 16000, order=5)
@@ -80,8 +82,10 @@ class Converter:
         # Resample wav if needed
         if sample_rate != Config.audio_sr:
             wav = librosa.resample(wav, sample_rate, Config.audio_sr)
-            print("resampled to {}".format(Config.audio_sr))
-            sf.write(wav_path, wav, 16000) # Write downsampled file
+            print(f"Wav file with sr {sample_rate} != {Config.audio_sr}, Now resampling to {Config.audio_sr}, then try to write to {wav_path}")
+
+            if wav_path:
+                sf.write(wav_path, wav, 16000) # Write downsampled file
         
         # Remove drifting noise
         wav = signal.filtfilt(b, a, wav)
@@ -138,7 +142,7 @@ class Converter:
                     log.info(f"Spect of {fileName} does not yet exist at: {save_name} ")
                     wav_path = os.path.join(input_dir, speaker, fileName)
                     x, sr = sf.read(wav_path)
-                    S = self._wav_to_spec(x, sr, wav_path, introduce_noise)
+                    S = self._wav_to_spec(x, sr, introduce_noise)
 
                     # Save spectrogram    
                     np.save(save_name, S.astype(np.float32), allow_pickle=False)
@@ -223,7 +227,6 @@ class Converter:
         Args:
             output_dir (str): Path to output directory
             input_data (list], optional): Spectogram from internal memory. Defaults to None.
-            input_dir (str, optional): Path to input directory. Defaults to None. Should contain files of each np.save'd spectrogram 
             skip_existing (bool): Whether output dir should be checked for output name first, if output already exists, load entry and skip processing
 
         Returns:
@@ -302,7 +305,7 @@ class Converter:
         return speaker_embeddings
 
 
-    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file):
+    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, skip_existing=True):
         """Convert wav files to input metadata
 
         Args:
@@ -324,10 +327,10 @@ class Converter:
         speakers = [source, target]
         
         # Convert audio to spectrograms
-        spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=True)
+        spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
         
         # Generate speaker embeddings
-        embeddings = self._spec_to_embedding(spec_dir, spects, skip_existing=True) 
+        embeddings = self._spec_to_embedding(spec_dir, spects, skip_existing=skip_existing) 
         
         # Create conversion metadata
         metadata = self._create_metadata(spec_dir, source, target, source_list)

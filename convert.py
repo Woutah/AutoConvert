@@ -46,7 +46,7 @@ def pad_seq(x, base=32):
     return np.pad(x, ((0,len_pad),(0,0)), 'constant'), len_pad
 
 
-def inference(output_dir, device, model_path, input_dir=None, input_data=None): 
+def inference(output_dir, device, model_path, input_dir=None, input_data=None, savename = "results"): 
     # Define AutoVC model
     G = Generator(32,256,512,32).eval().to(device)
     g_checkpoint = torch.load(model_path, map_location=device) 
@@ -103,16 +103,16 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None):
                 spect_vc.append( ('{}x{}'.format(utterance_i, speaker_j), uttr_total))
 
 
-    with open(os.path.join(output_dir, 'results.pkl'), 'wb') as handle:
+    with open(os.path.join(output_dir, savename + '.pkl'), 'wb') as handle:
         pickle.dump(spect_vc, handle) 
     
-    print("Created output spectrograms...")
+    print(f"Pickled the inferred spectrograms at:{handle}")
     
     return spect_vc
     
 
 source_speaker = args.source if args.source is not None else "p225"
-target_speaker = args.target if args.target is not None else "Wouter"
+target_speaker = args.target if args.target is not None else "p226"
 source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
 
 
@@ -141,8 +141,8 @@ if device.type == "cuda":
 
 converter = Converter(device)
 
-input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name)
+input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=True)
 
-output_data = inference(output_file_dir, device, args.model_path, input_data=input_data)
+output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_sources_{str(*source_list)}")
 
 converter.output_to_wav(output_data)

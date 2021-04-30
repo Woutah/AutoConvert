@@ -14,12 +14,15 @@ import yaml
 
 from parallel_wavegan.models import MelGANGenerator
 from parallel_wavegan.utils import load_model, download_pretrained_model
+import logging
+log = logging.getLogger(__name__)
 
 #torch.set_num_threads(4)
 # use_cuda = torch.cuda.is_available()
 # device = torch.device("cuda" if use_cuda else "cpu")
 
 def build_model_melgan():
+    log.info(f"Now loading in pretrained melGAN model")
     download_pretrained_model("vctk_multi_band_melgan.v2", "melgan")
     # download_pretrained_model("vctk_parallel_wavegan.v1", "melgan")
     # vocoder_conf = "melgan/vctk_multi_band_melgan.v2/config.yml"

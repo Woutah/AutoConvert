@@ -21,9 +21,6 @@ from config import Config
 from data_converter import Converter
 from parallel_wavegan.utils import read_hdf5
 
-from autovc.synthesis import build_model_melgan, melgan
-
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if device.type == "cuda":
@@ -84,57 +81,48 @@ vocoder_conf = "melgan/vctk_multi_band_melgan.v2/config.yml"
 with open(vocoder_conf) as f:
     config = yaml.load(f, Loader=yaml.Loader)
 
+#=========================Get autovc spectrogram==========================
+# # directories
+# input_dir = Config.dir_paths["input"]
+# converted_data_dir = Config.dir_paths["metadata"]
+# output_file_dir = Config.dir_paths["output"]
+# metadata_name = Config.metadata_name
 
-#================================================Loading/preprocessing=========================================================
-# audio, sr = sf.read(utility.get_full_path(".\\input\\p225\\p225_001.wav"))
-audio, sr = sf.read(utility.get_full_path(".\\input\\Wouter\\6.wav"))
-# trim silence
-if config["trim_silence"]:
-    audio, _ = librosa.effects.trim(audio,
-                                    top_db=config["trim_threshold_in_db"],
-                                    frame_length=config["trim_frame_size"],
-                                    hop_length=config["trim_hop_size"])
 
-if "sampling_rate_for_feats" not in config:
-    x = audio
-    # sampling_rate = config["sampling_rate"]
-    sampling_rate=sr
-    hop_size = config["hop_size"]
-else:
-    # NOTE(kan-bayashi): this procedure enables to train the model with different
-    #   sampling rate for feature and audio, e.g., training with mel extracted
-    #   using 16 kHz audio and 24 kHz audio as a target waveform
-    x = librosa.resample(audio, sampling_rate, config["sampling_rate_for_feats"])
-    # sampling_rate = config["sampling_rate_for_feats"]
-    assert config["hop_size"] * config["sampling_rate_for_feats"] % fs == 0, \
-        "hop_size must be int value. please check sampling_rate_for_feats is correct."
-    hop_size = config["hop_size"] * config["sampling_rate_for_feats"] // fs
+# audio, sr = sf.read(utility.get_full_path(".\\input\\Wouter\\6.wav"))
 
-# extract feature
-mel = logmelfilterbank(x,
-                        sampling_rate=sampling_rate,
-                        hop_size=hop_size,
-                        fft_size=config["fft_size"],
-                        win_length=config["win_length"],
-                        window=config["window"],
-                        num_mels=config["num_mels"],
-                        fmin=config["fmin"],
-                        fmax=config["fmax"])
+# speaker_emb = np.load(os.path.join("./output", "p226_emb.npy")) #load a speaker embedding
 
-                    
-# make sure the audio length and feature length are matched
-audio = np.pad(audio, (0, config["fft_size"]), mode="reflect")
-audio = audio[:len(mel) * config["hop_size"]]
-assert len(mel) * config["hop_size"] == len(audio)
 
-# apply global gain
-if config["global_gain_scale"] > 0.0:
-    audio *= config["global_gain_scale"]
-if np.abs(audio).max() >= 1.0:
-    logging.warn(f"Loaded audio file causes clipping. "
-                    f"it is better to re-consider global gain scale. Now exiting.")
-    exit(0)
+# source_speaker = "p225"
+# source_list =  ["p225_024"]
+# target_speaker = "Wouter"
+# target_list = ["1", "2", "3", "4", "5", "6", "7"]
 
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# spec_dir = Config.dir_paths["spectrograms"]
+
+# spec = converter._wav_to_spec(audio, )
+name, spec = np.load(".\\output\\spects_p225xp226_sources_p225_024.pkl", allow_pickle=True)[0] #0 is name
+
+# plt.imshow(spec)
+# plt.show()
+sr = 16000
+n_fft = 1024
+win_length = 1024
+hop_length = 256
+n_mels = 80
+fmin = 90
+fmax = 7600
+ref_level_db = 16
+min_level_db = -100
+def _db_to_amp(x):
+    return np.power(10.0, x * 0.05)
+
+spec = (np.clip(spec, 0, 1) * -min_level_db) + min_level_db
+spec = _db_to_amp(spec + ref_level_db)
 #================================================Normalization=========================================================
 # restore scaler
 scaler = StandardScaler()
@@ -148,12 +136,12 @@ else:
     raise ValueError("support only hdf5 (and normally npy - but not now) format.")
 # from version 0.23.0, this information is needed
 scaler.n_features_in_ = scaler.mean_.shape[0]
-mel = scaler.transform(mel)
+# spec = scaler.transform(spec)
 
 # plt.imshow(mel)
 # plt.show()
 
-#==============================================Put it through network==================================================
+#==============================================Put audio through autovc generator==================================================
 # converter.output_to_wav([[mel]])
 print(f"Now loading in pretrained melGAN model")
 download_pretrained_model("vctk_multi_band_melgan.v2", "melgan")
@@ -162,27 +150,16 @@ model.remove_weight_norm()
 model = model.eval().to(device)
 
 
-result = model.inference(torch.tensor(mel, dtype=torch.float).to(device)).view(-1)
+result = model.inference(torch.tensor(spec, dtype=torch.float).to(device)).view(-1)
 # from playsound import playsound
 
-# import pyaudio
-# p = pyaudio.PyAudio()
+import pyaudio
+p = pyaudio.PyAudio()
 
 # stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
 #                 channels=wf.getnchannels(),
 #                 rate=wf.getframerate(),
 #                 output=True)
-x, sr = sf.read(utility.get_full_path(".\\input\\p225\\p225_001.wav"))
-spec_225 = converter._wav_to_spec(x, sr,  utility.get_full_path(".\\input\\p225\\p225_001.wav"))
-# ax[1].imshow(np.swapaxes(spec_225, 0, 1))
-# ax[1].set_title("225")
-
-model = build_model_melgan().to("cuda")
-
-out = melgan(model, "cuda", spec_225)
-
-sf.write("output/test.wav", out, 24000)
-
 
 wavedata = result.detach().numpy()
 # data = wf.readframes(CHUNK)
@@ -203,7 +180,7 @@ stream = p.open(format=pyaudio.paFloat32,
 #     i+=1
     # data = wav.readframes(CHUNK)
     
-stream.write(wavedata)
+stream.write(np.concatenate([wavedata, wavedata, wavedata, wavedata]))
 # import time
 # time.sleep(2)
 # stream.flush()
