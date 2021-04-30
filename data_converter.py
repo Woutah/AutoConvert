@@ -66,7 +66,7 @@ class Converter:
         Returns:
             np.array: Mel spectrogram
         """
-        
+
         mel_basis = mel(16000, 1024, fmin=90, fmax=7600, n_mels=80).T
         min_level = np.exp(-100 / 20 * np.log(10))
         b, a = self._butter_highpass(30, 16000, order=5)
