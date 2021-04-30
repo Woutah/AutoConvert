@@ -407,7 +407,7 @@ class Converter:
         Args:
             output_data (list): List of mel spectograms to convert
         """
-        model = build_model().to(self._device)
+        model = build_model()
         # model = build_model_melgan().to(self._device)
         checkpoint = torch.load(os.path.join(Config.dir_paths["networks"], Config.pretrained_names["vocoder"]), map_location=self._device)
         model.load_state_dict(checkpoint["state_dict"])
