@@ -89,7 +89,7 @@ def wavegen(model, device, c=None, tqdm=tqdm):
     """
 
     model.eval()
-    # model.make_generation_fast_()
+    model.make_generation_fast_()
 
     Tc = c.shape[0]
     upsample_factor = hparams.hop_size
