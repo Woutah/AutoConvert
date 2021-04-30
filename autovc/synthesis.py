@@ -24,13 +24,15 @@ log = logging.getLogger(__name__)
 def build_model_melgan():
     log.info(f"Now loading in pretrained melGAN model")
     download_pretrained_model("vctk_multi_band_melgan.v2", "melgan")
+    # download_pretrained_model("vctk_parallel_wavegan.v1", "melgan")
     # vocoder_conf = "melgan/vctk_multi_band_melgan.v2/config.yml"
     # with open(vocoder_conf) as f:
     #     config = yaml.load(f, Loader=yaml.Loader)
         
     # pytorch_melgan = MelGANGenerator(**config["generator_params"])
-    # pytorch_melgan.remove_weight_norm()
+   
     pytorch_melgan = load_model("melgan/vctk_multi_band_melgan.v2/checkpoint-1000000steps.pkl")
+    pytorch_melgan.remove_weight_norm()
     # pytorch_melgan.load_state_dict(torch.load(
     #     "./networks/checkpoint-melgan.pkl", map_location="cpu")["model"]["generator"])
     return pytorch_melgan
@@ -62,7 +64,7 @@ def build_model():
 
 
 def melgan(model, device, c=None):
-    model.eval()
+    model.eval().to(device)
     
     Tc = c.shape[0]
     upsample_factor = hparams.hop_size
@@ -91,8 +93,8 @@ def wavegen(model, device, c=None, tqdm=tqdm):
     
     """
 
-    model.eval()
-    # model.make_generation_fast_()
+    model.eval().to(device)
+    model.make_generation_fast_()
 
     Tc = c.shape[0]
     upsample_factor = hparams.hop_size

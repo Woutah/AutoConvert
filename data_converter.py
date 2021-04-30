@@ -85,7 +85,7 @@ class Converter:
         
         # Remove drifting noise
         wav = signal.filtfilt(b, a, wav)
- 
+
         # add a little random noise for model robustness
         if introduce_noise:
             log.info(f"Introducing random noise into wav.file")
@@ -412,9 +412,10 @@ class Converter:
         Args:
             output_data (list): List of mel spectograms to convert
         """
-        model = build_model_melgan().to(self._device)
-        # checkpoint = torch.load(os.path.join(Config.dir_paths["networks"], Config.pretrained_names["vocoder"]), map_location=self._device)
-        # model.load_state_dict(checkpoint["state_dict"])
+        model = build_model()
+        # model = build_model_melgan().to(self._device)
+        checkpoint = torch.load(os.path.join(Config.dir_paths["networks"], Config.pretrained_names["vocoder"]), map_location=self._device)
+        model.load_state_dict(checkpoint["state_dict"])
         
         print("Starting vocoder...")
         for spect in output_data:
@@ -422,11 +423,11 @@ class Converter:
             print(name)
             # TODO: enable this for wavenet conversion
             #------------------------------------------------
-            c = spect[1]   
+            c = spect[1]
             # c = cv2.resize(c, None, fx=1.0, fy=24000.0/16000.0, interpolation=cv2.INTER_AREA)
             print(c.shape)
-            # waveform = wavegen(model, self._device, c=c)
-            waveform = melgan(model, self._device, c)
+            waveform = wavegen(model, self._device, c=c)
+            # waveform = melgan(model, self._device, c)
             #------------------------------------------------
             
             # TODO: enable this for librosa conversion
@@ -452,4 +453,4 @@ class Converter:
             # name += "_librosa"
             #--------------------------------------------------
             
-            sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 24000)
+            sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 16000)

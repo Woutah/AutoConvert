@@ -21,6 +21,9 @@ from config import Config
 from data_converter import Converter
 from parallel_wavegan.utils import read_hdf5
 
+from autovc.synthesis import build_model_melgan, melgan
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if device.type == "cuda":
@@ -162,13 +165,24 @@ model = model.eval().to(device)
 result = model.inference(torch.tensor(mel, dtype=torch.float).to(device)).view(-1)
 # from playsound import playsound
 
-import pyaudio
-p = pyaudio.PyAudio()
+# import pyaudio
+# p = pyaudio.PyAudio()
 
 # stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
 #                 channels=wf.getnchannels(),
 #                 rate=wf.getframerate(),
 #                 output=True)
+x, sr = sf.read(utility.get_full_path(".\\input\\p225\\p225_001.wav"))
+spec_225 = converter._wav_to_spec(x, sr,  utility.get_full_path(".\\input\\p225\\p225_001.wav"))
+# ax[1].imshow(np.swapaxes(spec_225, 0, 1))
+# ax[1].set_title("225")
+
+model = build_model_melgan().to("cuda")
+
+out = melgan(model, "cuda", spec_225)
+
+sf.write("output/test.wav", out, 24000)
+
 
 wavedata = result.detach().numpy()
 # data = wf.readframes(CHUNK)
