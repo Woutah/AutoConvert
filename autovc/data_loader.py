@@ -76,12 +76,12 @@ class Utterances(data.Dataset):
             len_crop = np.random.randint(*self.crop_range)
 
 
-        if tmp.shape[0] < self.len_crop:
-            len_pad = self.len_crop - tmp.shape[0]
+        if tmp.shape[0] < len_crop:
+            len_pad = len_crop - tmp.shape[0]
             uttr = np.pad(tmp, ((0,len_pad),(0,0)), 'constant')
-        elif tmp.shape[0] > self.len_crop:
-            left = np.random.randint(tmp.shape[0]-self.len_crop)
-            uttr = tmp[left:left+self.len_crop, :]
+        elif tmp.shape[0] > len_crop:
+            left = np.random.randint(tmp.shape[0]-len_crop)
+            uttr = tmp[left:left+len_crop, :]
         else:
             uttr = tmp
         
