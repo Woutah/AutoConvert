@@ -18,6 +18,7 @@ class Config:
     min_level_db = -100
     dim_emb = 256
     
+    
     dir_paths = {
         "networks" : "./networks",
         "input" : "./input",
@@ -49,6 +50,8 @@ class Config:
     
     emb_len_crop = 128
     emb_num_uttr = 10
+    
+    len_crop = 128
     
     
     

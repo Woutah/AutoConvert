@@ -6,15 +6,14 @@ import logging
 import os
 import pickle
 from math import ceil
-import vocoders
 
 import numpy as np
+import soundfile as sf
 import torch
 
 from autovc.model_vc import Generator
 from config import Config
 from data_converter import Converter
-import soundfile as sf
 
 logging.basicConfig(level=logging.INFO) 
 log = logging.getLogger(__name__)
@@ -61,7 +60,6 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None, s
                     #x_org = sbmt_i[2]
                     x_org, len_pad = pad_seq(sub_utterance)
                     uttr_org = torch.from_numpy(x_org[np.newaxis, :, :]).to(device)
-                
 
                     trg_speaker = metadata["target"][speaker_j]
                     emb_trg = torch.from_numpy(trg_speaker["emb"][np.newaxis, :]).to(device)
@@ -125,6 +123,8 @@ if __name__ == "__main__":
                         help="What vocoder to use")
     parser.add_argument("--force_preprocess", action="store_true",
                         help="Whether to force preprocessing or not")
+    parser.add_argument("--stop_split", action="store_false",
+                        help="Whether to split spects into ~2s parts before processing by AutoVC")
     args = parser.parse_args()
 
     source_speaker = args.source if args.source is not None else "p225"
@@ -169,7 +169,8 @@ if __name__ == "__main__":
     converter = Converter(device)
 
     skip = not args.force_preprocess
-    input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=skip)
+    split = args.stop_split
+    input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, split_spects=split, skip_existing=skip)
 
     output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_sources_{str(*source_list)}")
 

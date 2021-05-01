@@ -3,20 +3,18 @@ import math
 import os
 import pickle
 from collections import OrderedDict
-import librosa
 
+import librosa
 import numpy as np
-from numpy.fft import fft
 import soundfile as sf
 import torch
 from librosa.filters import mel
+from numpy.random import RandomState
 from scipy import signal
 from scipy.signal import get_window
 
-from numpy.random import RandomState
 from autovc.model_bl import D_VECTOR
 from config import Config
-
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +27,8 @@ class Converter:
     
     def __init__(self, device):
         self._device = device
+        self._prng = RandomState(42) #TODO: should this be the same each time?
+        
         log.info("Using device {}".format(self._device))
   
     
@@ -87,8 +87,8 @@ class Converter:
         # add a little random noise for model robustness
         if introduce_noise:
             log.info(f"Introducing random noise into wav.file")
-            prng = RandomState(42) #TODO: should this be the same each time?
-            wav = wav * 0.96 + (prng.rand(wav.shape[0])-0.5)*1e-06
+            
+            wav = wav * 0.96 + (self._prng.rand(wav.shape[0])-0.5)*1e-06
         
 
         # Compute spectrogram
@@ -99,6 +99,7 @@ class Converter:
         S = np.clip((D_db - Config.min_level_db) / -Config.min_level_db, 0, 1) # clip between 0-1
         
         return S
+    
     
     def _wav_dir_to_spec_dir(self, input_dir, output_dir, speakers=None, introduce_noise=False, skip_existing = True):
         """Convert wav files in folder `input_dir` to a mel spectrogram, then puts them (numpy 2d spectrograms) in `output_dir`
@@ -195,17 +196,24 @@ class Converter:
         for utterance in source_list:
             spect = np.load(os.path.join(input_dir, source, utterance + ".npy"))
             
-            # Split utterance 
-            spect_count = math.ceil(spect.shape[0]/len_crop) #Get amount of ~2-second spectrograms
-            # frames_per_spec = int(spect.shape[0]/spect_count) #get frames per spectrogram
-            frames_per_spec = 128
             spects = []
-            i = 0
-            for i in range(spect_count - 1):
-                spects.append(spect[frames_per_spec * i: frames_per_spec * (i+1), :] )
+            if len_crop > 0:
+            
+                # Split utterance 
+                spect_count = math.ceil(spect.shape[0]/len_crop) #Get amount of ~2-second spectrograms
+                # frames_per_spec = int(spect.shape[0]/spect_count) #get frames per spectrogram
+                
+                
+                i = 0
+                for i in range(spect_count - 1):
+                    spects.append(spect[len_crop * i: len_crop * (i+1), :] )
 
-            spects.append(spect[frames_per_spec * (i+1): , :] ) #append the rest
-            print("Amount of parts: {}".format(len(spects)))
+                spects.append(spect[len_crop * (i+1): , :] ) #append the rest
+                print("Amount of parts: {}".format(len(spects)))
+            else:
+                spects = [spect]
+                
+            
             metadata["source"][source]["utterances"][utterance] = spects
         
         # Target speaker embedding
@@ -308,10 +316,8 @@ class Converter:
         
         return True
                 
-        
 
-
-    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, skip_existing=True):
+    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, split_spects=True, skip_existing=True):
         """Convert wav files to input metadata
 
         Args:
@@ -332,6 +338,12 @@ class Converter:
             
         speakers = [source, target]
         
+        # Split utterence into ~2s parts or not
+        if split_spects:
+            len_crop = Config.len_crop
+        else:
+            len_crop = 0
+        
         if not skip_existing or not self._check_embeddings(spec_dir, speakers):
             # Convert audio to spectrograms
             spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
@@ -340,7 +352,7 @@ class Converter:
             embeddings = self._spec_to_embedding(spec_dir, spects, skip_existing=skip_existing) 
         
         # Create conversion metadata
-        metadata = self._create_metadata(spec_dir, source, target, source_list)
+        metadata = self._create_metadata(spec_dir, source, target, source_list, len_crop=len_crop)
         
         with open(os.path.join(output_dir, output_file), 'wb') as handle:
             pickle.dump(metadata, handle) 
@@ -373,8 +385,6 @@ class Converter:
             speakers.append(utterances)
    
         return speakers
-   
-
  
  
     def generate_train_data(self, input_dir, output_dir, output_file):
