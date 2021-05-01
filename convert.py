@@ -153,7 +153,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     source_speaker = args.source if args.source is not None else "p225"
-    target_speaker = args.target if args.target is not None else "p226"
+    target_speaker = args.target if args.target is not None else "Wouter"
     source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
 
     # directories

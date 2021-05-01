@@ -15,7 +15,7 @@ from config import Config
 import argparse
 
 source_speaker = "p225"
-source_list =  ["p225_024"]
+source_list =  ["p225_001"]
 target_speaker = "Wouter"
 target_list = ["1", "2", "3", "4", "5", "6", "7"]
 

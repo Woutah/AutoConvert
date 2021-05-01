@@ -74,17 +74,21 @@ def logmelfilterbank(audio,
 
     return np.log10(np.maximum(eps, np.dot(spc, mel_basis.T)))
 
-    
+    # converter.output_to_wav([[mel]])
+print(f"Now loading in pretrained melGAN model")
+download_pretrained_model("vctk_multi_band_melgan.v2", "./vocoders/melgan")
+model = load_model("melgan/vctk_multi_band_melgan.v2/checkpoint-1000000steps.pkl")
+model.remove_weight_norm()
+model = model.eval().to(device)
 
-download_pretrained_model("vctk_multi_band_melgan.v2", "melgan") #download model
 vocoder_conf = "melgan/vctk_multi_band_melgan.v2/config.yml"
 with open(vocoder_conf) as f:
     config = yaml.load(f, Loader=yaml.Loader)
 
 
 #================================================Loading/preprocessing=========================================================
-audio, sr = sf.read(utility.get_full_path(".\\input\\p225\\p225_001.wav"))
-# audio, sr = sf.read(utility.get_full_path(".\\input\\Wouter\\6.wav"))
+# audio, sr = sf.read(utility.get_full_path(".\\input\\p225\\p225_001.wav"))
+audio, sr = sf.read(utility.get_full_path(".\\input\\Wouter\\6.wav"))
 # trim silence
 if config["trim_silence"]:
     audio, _ = librosa.effects.trim(audio,
@@ -150,8 +154,8 @@ if np.abs(audio).max() >= 1.0:
 # restore scaler
 scaler = StandardScaler()
 if config["format"] == "hdf5": 
-    scaler.mean_ = read_hdf5("./parallel_wavegan/stats.h5", "mean")
-    scaler.scale_ = read_hdf5("./parallel_wavegan/stats.h5", "scale")
+    scaler.mean_ = read_hdf5(".\\vocoders\\melgan\\stats.h5", "mean")
+    scaler.scale_ = read_hdf5(".\\vocoders\\melgan\\stats.h5", "scale")
 # elif config["format"] == "npy":
     # scaler.mean_ = np.load(args.stats)[0]
     # scaler.scale_ = np.load(args.stats)[1]
@@ -165,12 +169,7 @@ mel = scaler.transform(mel)
 # plt.show()
 
 #==============================================Put it through network==================================================
-# converter.output_to_wav([[mel]])
-print(f"Now loading in pretrained melGAN model")
-download_pretrained_model("vctk_multi_band_melgan.v2", "melgan")
-model = load_model("melgan/vctk_multi_band_melgan.v2/checkpoint-1000000steps.pkl")
-model.remove_weight_norm()
-model = model.eval().to(device)
+
 
 
 result = model.inference(torch.tensor(mel, dtype=torch.float).to(device)).view(-1)

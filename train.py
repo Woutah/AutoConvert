@@ -7,6 +7,7 @@ from autovc.solver_encoder import Solver
 from autovc.data_loader import get_loader
 from torch.backends import cudnn
 
+import json
 import torch
 from data_converter import Converter
 
@@ -14,6 +15,7 @@ from config import Config
 import logging
 logging.basicConfig(level=logging.INFO) 
 log = logging.getLogger(__name__)
+import datetime
 
 def str2bool(v):
     return v.lower() in ('true')
@@ -43,7 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('--freq', type=int, default=32)
     
     # Training configuration.
-    parser.add_argument('--model_path', type=str, default=None)
+    parser.add_argument('--model_path', type=str, default=None) #Load a pretrained model
     parser.add_argument('--input_dir', type=str, default='./train_input')#.wav file dir of with structure: `input_dir`/speaker_name/wavname1.wav  (etc.)
     parser.add_argument('--data_dir', type=str, default='./train')
     parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints')
@@ -61,6 +63,12 @@ if __name__ == '__main__':
     if not os.path.isdir(config.checkpoint_dir):
         os.mkdir(config.checkpoint_dir)
     
+    cur_time = datetime.datetime.now().strftime("%Y%m%d_%H;%M")
+
+
+    with open(os.path.join(config.checkpoint_dir, cur_time+'_train_args.txt'), 'w') as f:
+        json.dump(config.__dict__, f, indent=2)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     if not os.path.exists(os.path.join(config.data_dir, Config.train_metadata_name)):

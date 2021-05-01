@@ -76,7 +76,11 @@ def logmelfilterbank(audio,
 
     
 
-download_pretrained_model("vctk_multi_band_melgan.v2", "melgan") #download model
+download_pretrained_model("vctk_multi_band_melgan.v2", "./vocoders/melgan") #download model
+model = load_model("./vocoders/melgan/vctk_multi_band_melgan.v2/checkpoint-1000000steps.pkl")
+model.remove_weight_norm()
+model = model.eval().to(device)
+
 vocoder_conf = "melgan/vctk_multi_band_melgan.v2/config.yml"
 with open(vocoder_conf) as f:
     config = yaml.load(f, Loader=yaml.Loader)
@@ -127,8 +131,8 @@ spec = _db_to_amp(spec + ref_level_db)
 # restore scaler
 scaler = StandardScaler()
 if config["format"] == "hdf5": 
-    scaler.mean_ = read_hdf5("./parallel_wavegan/stats.h5", "mean")
-    scaler.scale_ = read_hdf5("./parallel_wavegan/stats.h5", "scale")
+    scaler.mean_ = read_hdf5(".\\vocoders\\melgan\\stats.h5", "mean")
+    scaler.scale_ = read_hdf5(".\\vocoders\\melgan\\stats.h5", "scale")
 # elif config["format"] == "npy":
     # scaler.mean_ = np.load(args.stats)[0]
     # scaler.scale_ = np.load(args.stats)[1]
@@ -143,11 +147,6 @@ scaler.n_features_in_ = scaler.mean_.shape[0]
 
 #==============================================Put audio through autovc generator==================================================
 # converter.output_to_wav([[mel]])
-print(f"Now loading in pretrained melGAN model")
-download_pretrained_model("vctk_multi_band_melgan.v2", "melgan")
-model = load_model("melgan/vctk_multi_band_melgan.v2/checkpoint-1000000steps.pkl")
-model.remove_weight_norm()
-model = model.eval().to(device)
 
 
 result = model.inference(torch.tensor(spec, dtype=torch.float).to(device)).view(-1)
