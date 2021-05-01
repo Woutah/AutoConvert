@@ -4,7 +4,6 @@ import os
 import pickle
 from collections import OrderedDict
 import librosa
-from librosa.core.harmonic import interp_harmonics
 
 import numpy as np
 import soundfile as sf
@@ -16,7 +15,6 @@ from scipy.signal import get_window
 
 from numpy.random import RandomState
 from autovc.model_bl import D_VECTOR
-from autovc.synthesis import build_model, build_model_melgan, wavegen, melgan
 from config import Config
 
 from parallel_wavegan.utils import read_hdf5
@@ -440,43 +438,3 @@ class Converter:
         return mel_out
  
  
-    def output_to_wav(self, output_data):
-        """Convert mel spectograms to audio files
-
-        Args:
-            output_data (list): List of mel spectograms to convert
-        """
-        model = build_model()
-        # model = build_model_melgan().to(self._device)
-        checkpoint = torch.load(os.path.join(Config.dir_paths["networks"], Config.pretrained_names["vocoder"]), map_location=self._device)
-        model.load_state_dict(checkpoint["state_dict"])
-        
-        print("Starting vocoder...")
-        for spect in output_data:
-            name = spect[0]
-            print(name)
-            # TODO: enable this for wavenet conversion
-            #------------------------------------------------
-            # c = spect[1]
-            # print(c.shape)
-            # waveform = wavegen(model, self._device, c=c)
-            #------------------------------------------------
-            
-            # TODO: enable this for melgan conversion
-            #------------------------------------------------
-            c = spect[1]
-            # c = cv2.resize(c, None, fx=1.0, fy=24000.0/16000.0, interpolation=cv2.INTER_AREA)
-            # print(c.shape)
-            # c = self.preprocess_melgan(c)
-            # waveform = melgan(model, self._device, c)
-            #------------------------------------------------
-            
-            # TODO: enable this for librosa conversion
-            #------------------------------------------------
-            c = spect[1]
-            lin_out = librosa.feature.inverse.mel_to_stft(c, sr=Config.audio_sr, n_fft=Config.n_fft, fmin=Config.fmin, fmax=Config.fmax) 
-            waveform = librosa.griffinlim(lin_out, win_length=Config.win_length, hop_length=Config.hop_length)
-            name += "_librosa"
-            #--------------------------------------------------
-            
-            sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 16000)

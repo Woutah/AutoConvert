@@ -6,38 +6,20 @@ import logging
 import os
 import pickle
 from math import ceil
+import vocoders
 
 import numpy as np
 import torch
-import torchaudio
 
 from autovc.model_vc import Generator
 from config import Config
 from data_converter import Converter
+import soundfile as sf
 
 logging.basicConfig(level=logging.INFO) 
 log = logging.getLogger(__name__)
     
 
-# Parse arguments
-parser = argparse.ArgumentParser(description='Transfer voices using pretrained AutoVC')
-parser.add_argument("--source", default=None,
-                    help="Source speaker folder")
-parser.add_argument("--target", default=None,
-                    help="Target speaker folder")
-parser.add_argument("--source_wav", nargs='+', default=None,
-                    help="Source speaker utterance")
-parser.add_argument("--model_path", type=str, default=os.path.join(Config.dir_paths["networks"], Config.pretrained_names["autovc"]),
-                    help="Path to trained AutoVC model")
-args = parser.parse_args()
-
-def denormalize_from_VC(mel):
-    def _db_to_amp(x):
-        return np.power(10.0, x * 0.05)
-    
-    mel = (np.clip(mel, 0, 1) * -Config.min_level_db) + Config.min_level_db
-    mel = _db_to_amp(mel + Config.ref_level_db)
-    return mel.T
 
 def pad_seq(x, base=32):
     len_out = int(base * ceil(float(x.shape[0])/base))
@@ -99,7 +81,6 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None, s
                     # ax[0].imshow(np.swapaxes(uttr_trg, 0, 1))
                     # ax[1].imshow(np.swapaxes(uttr_total, 0, 1))
                     # plt.show()
-                uttr_total = denormalize_from_VC(uttr_total)
                 spect_vc.append( ('{}x{}'.format(utterance_i, speaker_j), uttr_total))
 
 
@@ -109,40 +90,107 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None, s
     print(f"Pickled the inferred spectrograms at:{handle}")
     
     return spect_vc
-    
-
-source_speaker = args.source if args.source is not None else "p225"
-target_speaker = args.target if args.target is not None else "p226"
-source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
 
 
+def output_to_wav(output_data, vocoder):
+        """Convert mel spectograms to audio files
 
-# directories
-input_dir = Config.dir_paths["input"]
-converted_data_dir = Config.dir_paths["metadata"]
-output_file_dir = Config.dir_paths["output"]
-metadata_name = Config.convert_metadata_name
+        Args:
+            output_data (list): List of mel spectograms to convert
+        """
+        # model = build_model()
+        # # model = build_model_melgan().to(self._device)
+        # checkpoint = torch.load(os.path.join(Config.dir_paths["networks"], Config.pretrained_names["vocoder"]), map_location=self._device)
+        # model.load_state_dict(checkpoint["state_dict"])
+        
+        print("Starting vocoder...")
+        for spect in output_data:
+            name = spect[0]
+            print(name)
+            # TODO: enable this for wavenet conversion
+            #------------------------------------------------
+            # c = spect[1]
+            # print(c.shape)
+            # waveform = wavegen(model, self._device, c=c)
+            #------------------------------------------------
+            
+            # TODO: enable this for melgan conversion
+            #------------------------------------------------
+            # c = cv2.resize(c, None, fx=1.0, fy=24000.0/16000.0, interpolation=cv2.INTER_AREA)
+            # print(c.shape)
+            # c = self.preprocess_melgan(c)
+            # waveform = melgan(model, self._device, c)
+            #------------------------------------------------
+            
+            # TODO: enable this for librosa conversion
+            #------------------------------------------------
+            # c = spect[1]
+            # lin_out = librosa.feature.inverse.mel_to_stft(c, sr=Config.audio_sr, n_fft=Config.n_fft, fmin=Config.fmin, fmax=Config.fmax) 
+            # waveform = librosa.griffinlim(lin_out, win_length=Config.win_length, hop_length=Config.hop_length)
+            # name += "_librosa"
+            #--------------------------------------------------
+            c = spect[1]
+            
+            waveform = vocoder.synthesize(c)
+            
+            
+            sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 16000)
+  
+  
+if __name__ == "__main__":
+    # Parse arguments
+    parser = argparse.ArgumentParser(description='Transfer voices using pretrained AutoVC')
+    parser.add_argument("--source", default=None,
+                        help="Source speaker folder")
+    parser.add_argument("--target", default=None,
+                        help="Target speaker folder")
+    parser.add_argument("--source_wav", nargs='+', default=None,
+                        help="Source speaker utterance")
+    parser.add_argument("--model_path", type=str, default=os.path.join(Config.dir_paths["networks"], Config.pretrained_names["autovc"]),
+                        help="Path to trained AutoVC model")
+    parser.add_argument("--vocoder", type=str, default="griffin", choices=["griffin", "wavenet", "melgan"],
+                        help="What vocoder to use")
+    args = parser.parse_args()
 
-if not os.path.isdir(os.path.join(input_dir, source_speaker)):
-    print("Didn't find a {} folder in the {} folder".format(source_speaker, input_dir))
-    exit(1)
-    
-if not os.path.isdir(os.path.join(input_dir, target_speaker)):
-    print("Didn't find a {} folder in the {} folder".format(target_speaker, input_dir))
-    exit(1)
+    source_speaker = args.source if args.source is not None else "p225"
+    target_speaker = args.target if args.target is not None else "p226"
+    source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# device = torch.device("cpu")
+    # directories
+    input_dir = Config.dir_paths["input"]
+    converted_data_dir = Config.dir_paths["metadata"]
+    output_file_dir = Config.dir_paths["output"]
+    metadata_name = Config.convert_metadata_name
 
-if device.type == "cuda":
-    print(torch.cuda.get_device_name(0))
+    if not os.path.isdir(os.path.join(input_dir, source_speaker)):
+        print("Didn't find a {} folder in the {} folder".format(source_speaker, input_dir))
+        exit(1)
+        
+    if not os.path.isdir(os.path.join(input_dir, target_speaker)):
+        print("Didn't find a {} folder in the {} folder".format(target_speaker, input_dir))
+        exit(1)
 
-#data = torchaudio.datasets.VCTK_092(".", download=True)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cpu")
 
-converter = Converter(device)
+    if device.type == "cuda":
+        print(torch.cuda.get_device_name(0))
+        
+    if args.vocoder == "griffin":
+        from vocoders import GriffinLim
+        vocoder = GriffinLim(device)
+    elif args.vocoder == "wavenet":
+        from vocoders import WaveNet
+        vocoder_path = os.path.join(Config.dir_paths["networks"], Config.pretrained_names["wavenet"])
+        vocoder = WaveNet(device, vocoder_path)
+    elif args.vocoder == "melgan":
+        from vocoders import MelGan
+        vocoder = MelGan(device)
 
-input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=True)
+    converter = Converter(device)
 
-output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_sources_{str(*source_list)}")
+    input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=True)
 
-converter.output_to_wav(output_data)
+    output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_sources_{str(*source_list)}")
+
+    output_to_wav(output_data, vocoder)
