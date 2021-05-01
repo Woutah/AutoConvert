@@ -104,12 +104,16 @@ class Converter:
         
         return S
     
-    def _wav_dir_to_spec_dir(self, input_dir, output_dir, speakers=None, introduce_noise=False, skip_existing = True):
+    def _wav_dir_to_spec_dir(self, input_dir, output_dir, speakers=None, introduce_noise=False, skip_existing = True, conversion_method=None):
         """Convert wav files in folder `input_dir` to a mel spectrogram, then puts them (numpy 2d spectrograms) in `output_dir`
 
         Args:
             input_dir (str): Path to input directory
             output_dir (str): Path to output directory
+            speakers (str): which speakers (subpaths) to use from output dir, take all subpaths if None
+            conversion_method (method): method that is utilised to convert the loaded wav to a spec, defaults to self._wav_to_spec
+                (this is implemented to easily facilitate alternative conversion methods, e.g. melgan spectrogram conversions which are somehwat different )
+                passed parameters: self, wav(numpy.ndarray), sampling_rate (int), introduce_noise (bool)        
 
         Returns:
             np.array: Mel spectrogram
@@ -137,16 +141,19 @@ class Converter:
                     log.info(f"Loading spectrogram of {fileName} from {save_name} ")
                     S = np.load(save_name) #Reload predefined spect #TODO: skip load
                 else:
-                    log.info(f"Spect of {fileName} does not yet exist at: {save_name} ")
+                    log.info(f"Spect of {fileName} does not yet exist at: {save_name}, now creating using {conversion_method}")
                     wav_path = os.path.join(input_dir, speaker, fileName)
                     x, sr = sf.read(wav_path)
-                    S = self._wav_to_spec(x, sr, introduce_noise)
+                    if conversion_method: #if a custom conversion function has been specified  
+                        S = conversion_method( x, sr, introduce_noise)
+                    else:
+                        S = self._wav_to_spec( x, sr, introduce_noise) #Otherwise take default
 
                     # Save spectrogram    
                     np.save(save_name, S.astype(np.float32), allow_pickle=False)
-                spects[speaker][fileName[:-4]] = S.astype(np.float32)
+                spects[speaker][fileName[:-4]] = S.astype(np.float32) #TODO: isn't this memory intensive for larger datasets? 
                 
-        print("Converted input files to spectrograms...")
+        log.info(f"Converted input files to spectrograms, saved in {save_name}")
         return spects
 
 
@@ -294,11 +301,14 @@ class Converter:
             
             speaker_embeddings[speaker] = np.mean(embs, axis=0)
             
+            if not os.path.exists(os.path.join(output_dir, speaker)): #if speaker location does not exist yet
+                os.makedirs(os.path.join(output_dir, speaker))
+
             np.save(save_path, 
                     speaker_embeddings[speaker], allow_pickle=False)
                
             
-        print("Extracted speaker embeddings...")
+        print(f"Extracted all speaker embeddings to {save_path}")
         return speaker_embeddings
 
 
@@ -336,10 +346,10 @@ class Converter:
             
         speakers = [source, target]
         
-        if not skip_existing or not self._check_embeddings(spec_dir, speakers):
-            # Convert audio to spectrograms
-            spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
-            
+        # Convert audio to spectrograms
+        spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
+
+        if not skip_existing or not self._check_embeddings(spec_dir, speakers):    
             # Generate speaker embeddings
             embeddings = self._spec_to_embedding(spec_dir, spects, skip_existing=skip_existing) 
         

@@ -10,6 +10,8 @@ class Config:
         "output" : "./output",
         "metadata" : "./metadata",
         "spectrograms" : "./spectrograms",
+        "melgan_config_path": "./vocoders/melgan/config.yml",
+        "melgan_stats_path": "./vocoders/melgan/stats.h5"
     }
     
     pretrained_names = {

@@ -13,6 +13,7 @@ train
 train_melgan
 checkpoints
 spectrograms_melgan
+melgan/
 vocoders/melgan/models
 
 # Byte-compiled / optimized / DLL files

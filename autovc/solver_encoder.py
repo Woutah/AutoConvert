@@ -33,6 +33,9 @@ class Solver(object):
         self.save_freq = config.save_freq
         self.checkpoint_dir= config.checkpoint_dir
 
+        if not os.path.exists (self.checkpoint_dir): #create checkpoint dir if it does not exist
+            os.makedirs(self.checkpoint_dir)
+
         # Build the model and tensorboard.
         self.build_model()
         self.model_path = config.model_path
@@ -76,6 +79,10 @@ class Solver(object):
         
         # Print logs in specified order
         keys = ['G/loss_id','G/loss_id_psnt','G/loss_cd']
+        
+        loss = {}
+        for key in keys:
+            loss[key] = [] #create loss histories
             
         # Start training.
         print('Start training...')
@@ -121,10 +128,9 @@ class Solver(object):
             self.g_optimizer.step()
 
             # Logging.
-            loss = {}
-            loss['G/loss_id'] = g_loss_id.item()
-            loss['G/loss_id_psnt'] = g_loss_id_psnt.item()
-            loss['G/loss_cd'] = g_loss_cd.item()
+            loss['G/loss_id'].append( (i, g_loss_id.item()) )
+            loss['G/loss_id_psnt'].append( (i,g_loss_id_psnt.item()) )
+            loss['G/loss_cd'].append( (i,g_loss_cd.item()) )
 
             # =================================================================================== #
             #                                 4. Miscellaneous                                    #
@@ -136,7 +142,7 @@ class Solver(object):
                 et = str(datetime.timedelta(seconds=et))[:-7]
                 log = "Elapsed [{}], Iteration [{}/{}]".format(et, self.start_step+i+1, self.num_iters)
                 for tag in keys:
-                    log += ", {}: {:.4f}".format(tag, loss[tag])
+                    log += ", {}: {:.4f}".format(tag, loss[tag][-1][1])
                 print(log)
                 
             if (i+1) % self.save_freq == 0:
@@ -144,7 +150,7 @@ class Solver(object):
                             "model" : self.G.state_dict(), 
                             'optimizer': self.g_optimizer.state_dict(),
                             "steps" : self.start_step+i,
-                            "loss" : loss
+                            "loss" : loss, 
                             }, os.path.join(self.checkpoint_dir, "autovc_{}.ckpt".format(self.start_step+i+1)))
                 
 

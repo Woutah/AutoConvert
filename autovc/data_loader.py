@@ -5,7 +5,8 @@ import pickle
 import os    
        
 from multiprocessing import Process, Manager   
-
+import logging
+log = logging.getLogger(__name__)
 
 class Utterances(data.Dataset):
     """Dataset class for the Utterances dataset."""
@@ -55,7 +56,12 @@ class Utterances(data.Dataset):
                 if j < 2:  # fill in speaker id and embedding
                     uttrs[j] = tmp
                 else: # load the mel-spectrograms
-                    uttrs[j] = np.load(os.path.join(self.root_dir, tmp))
+                    # print(f"Loading in {os.path.join(self.root_dir, tmp)}")
+                    try:
+                        uttrs[j] = np.load(os.path.join(self.root_dir, tmp))
+                    except:
+                        log.fatal(f"Could not load in file: {os.path.join(self.root_dir, tmp)}... exiting...")
+                        exit(1)
             dataset[idx_offset+k] = uttrs
 
 
