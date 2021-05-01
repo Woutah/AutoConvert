@@ -2,8 +2,6 @@ import subprocess, os, platform, pathlib, logging
 log = logging.getLogger(__name__)
 import numpy as np
 
-import pyaudio
-
 # sys.path.insert(0, os.getcwd())
 
 
@@ -46,30 +44,32 @@ def overwrite_to_file(filename, content):
 
 
 
-def play_wav_from_npy(wav : np.ndarray):
-    
-    p = pyaudio.PyAudio()
-    stream = p.open(
-                    format=pyaudio.paFloat32,
-                    #format=pyaudio.paFloat32,
-                    channels=1,
-                    rate=24000,
-                    output=True,
-                    # output_device_index=2
-                    )
-    # i = 0
-    # chunksize = 1024 * 4
-    # data = [1]
-    # while len(data) != 0:
-    #     while(stream.get_write_available() > 0) and len(data) > 0:
-    #         slice = (chunksize * i, min(chunksize * (i+1), len(wavedata)))
-    #         data = wavedata[slice[0]:slice[1]]
-    #         print(f"writing {slice}, of len {len(data)}")
-    #         stream.write(data)
-    #         i+=1
+# import pyaudio
 
-    stream.write(np.concatenate([wav, wav, wav, wav])) #Due to some problems it needs to be played 4 times? 
-    stream.start_stream()
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
+# def play_wav_from_npy(wav : np.ndarray):
+    
+#     p = pyaudio.PyAudio()
+#     stream = p.open(
+#                     format=pyaudio.paFloat32,
+#                     #format=pyaudio.paFloat32,
+#                     channels=1,
+#                     rate=24000,
+#                     output=True,
+#                     # output_device_index=2
+#                     )
+#     # i = 0
+#     # chunksize = 1024 * 4
+#     # data = [1]
+#     # while len(data) != 0:
+#     #     while(stream.get_write_available() > 0) and len(data) > 0:
+#     #         slice = (chunksize * i, min(chunksize * (i+1), len(wavedata)))
+#     #         data = wavedata[slice[0]:slice[1]]
+#     #         print(f"writing {slice}, of len {len(data)}")
+#     #         stream.write(data)
+#     #         i+=1
+
+#     stream.write(np.concatenate([wav, wav, wav, wav])) #Due to some problems it needs to be played 4 times? 
+#     stream.start_stream()
+#     stream.stop_stream()
+#     stream.close()
+#     p.terminate()
