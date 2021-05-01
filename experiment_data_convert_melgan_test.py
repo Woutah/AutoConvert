@@ -46,8 +46,8 @@ audio, sr = sf.read("./input/p226/p226_003.wav")
 
 #===============
 melganconverter = MelganConverter(device, Config.dir_paths["melgan_config_path"],  Config.dir_paths["melgan_stats_path"])
-spect = melganconverter._wav_to_melgan_spec(audio, sr)
-# spect = np.load(".\\train_melgan\\p226\\p226_003.npy") #load example
+# spect = melganconverter._wav_to_melgan_spec(audio, sr)
+spect = np.load(".\\train_melgan\\p226\\p226_003.npy") #load example
 
 
 result = model.inference(torch.tensor(spect, dtype=torch.float).to(device)).view(-1)
