@@ -6,10 +6,10 @@ from collections import OrderedDict
 import librosa
 
 import numpy as np
+from numpy.fft import fft
 import soundfile as sf
 import torch
 from librosa.filters import mel
-from librosa import resample
 from scipy import signal
 from scipy.signal import get_window
 
@@ -17,10 +17,6 @@ from numpy.random import RandomState
 from autovc.model_bl import D_VECTOR
 from config import Config
 
-from parallel_wavegan.utils import read_hdf5
-from sklearn.preprocessing import StandardScaler
-import yaml
-from parallel_wavegan.bin.preprocess import logmelfilterbank
 
 log = logging.getLogger(__name__)
 
@@ -73,9 +69,9 @@ class Converter:
             np.array: Mel spectrogram
         """
 
-        mel_basis = mel(16000, 1024, fmin=90, fmax=7600, n_mels=80).T
-        min_level = np.exp(-100 / 20 * np.log(10))
-        b, a = self._butter_highpass(30, 16000, order=5)
+        mel_basis = mel(Config.audio_sr, Config.n_fft, fmin=Config.fmin, fmax=Config.fmax, n_mels=Config.n_mels).T
+        min_level = np.exp(Config.min_level_db / 20 * np.log(10))
+        b, a = self._butter_highpass(30, Config.audio_sr, order=5)
 
         # Resample wav if needed
         if sample_rate != Config.audio_sr:
@@ -83,7 +79,7 @@ class Converter:
             print(f"Wav file with sr {sample_rate} != {Config.audio_sr}, Now resampling to {Config.audio_sr}, then try to write to {wav_path}")
 
             if wav_path:
-                sf.write(wav_path, wav, 16000) # Write downsampled file
+                sf.write(wav_path, wav, Config.audio_sr) # Write downsampled file
         
         # Remove drifting noise
         wav = signal.filtfilt(b, a, wav)
@@ -96,11 +92,11 @@ class Converter:
         
 
         # Compute spectrogram
-        D = self._pySTFT(wav).T
+        D = self._pySTFT(wav, fft_length=Config.n_fft, hop_length=Config.hop_length).T
         # Convert to mel and normalize
         D_mel = np.dot(D, mel_basis)
-        D_db = 20 * np.log10(np.maximum(min_level, D_mel)) - 16
-        S = np.clip((D_db + 100) / 100, 0, 1)    
+        D_db = 20 * np.log10(np.maximum(min_level, D_mel)) - Config.ref_level_db # amp to db
+        S = np.clip((D_db - Config.min_level_db) / -Config.min_level_db, 0, 1) # clip between 0-1
         
         return S
     
@@ -239,7 +235,7 @@ class Converter:
         # Load speaker encoder
         network_dir = Config.dir_paths["networks"]
         speaker_encoder_name = Config.pretrained_names["speaker_encoder"]
-        speaker_encoder = D_VECTOR(dim_input=80, dim_cell=768, dim_emb=256).eval().to(self._device)
+        speaker_encoder = D_VECTOR(**Config.wavenet_arch).eval().to(self._device)
         c_checkpoint = torch.load(os.path.join(network_dir, speaker_encoder_name), map_location=self._device)     
         
         new_state_dict = OrderedDict()
@@ -249,8 +245,8 @@ class Converter:
         speaker_encoder.load_state_dict(new_state_dict)
         
         
-        num_uttrs = 10 # TODO: Why not just use all files?
-        len_crop = 128
+        num_uttrs = Config.emb_num_uttr # TODO: Why not just use all files?
+        len_crop = Config.emb_len_crop
         
         # if input_data is not None:
         spects = input_data
