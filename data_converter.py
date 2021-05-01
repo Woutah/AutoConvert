@@ -336,7 +336,7 @@ class Converter:
             
         speakers = [source, target]
         
-        if not self._check_embeddings(spec_dir, speakers):
+        if not skip_existing or not self._check_embeddings(spec_dir, speakers):
             # Convert audio to spectrograms
             spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
             
