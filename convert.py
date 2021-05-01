@@ -37,7 +37,7 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None, s
     print("Using model {}".format(model_path))
         
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir)    
+        os.makedirs(output_dir)    
     
     # Load input data
     if input_data is not None:
@@ -92,7 +92,7 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None, s
     return spect_vc
 
 
-def output_to_wav(output_data, vocoder):
+def output_to_wav(output_data, vocoder, output_dir):
         """Convert mel spectograms to audio files
 
         Args:
@@ -107,34 +107,12 @@ def output_to_wav(output_data, vocoder):
         for spect in output_data:
             name = spect[0]
             print(name)
-            # TODO: enable this for wavenet conversion
-            #------------------------------------------------
-            # c = spect[1]
-            # print(c.shape)
-            # waveform = wavegen(model, self._device, c=c)
-            #------------------------------------------------
             
-            # TODO: enable this for melgan conversion
-            #------------------------------------------------
-            # c = cv2.resize(c, None, fx=1.0, fy=24000.0/16000.0, interpolation=cv2.INTER_AREA)
-            # print(c.shape)
-            # c = self.preprocess_melgan(c)
-            # waveform = melgan(model, self._device, c)
-            #------------------------------------------------
-            
-            # TODO: enable this for librosa conversion
-            #------------------------------------------------
-            # c = spect[1]
-            # lin_out = librosa.feature.inverse.mel_to_stft(c, sr=Config.audio_sr, n_fft=Config.n_fft, fmin=Config.fmin, fmax=Config.fmax) 
-            # waveform = librosa.griffinlim(lin_out, win_length=Config.win_length, hop_length=Config.hop_length)
-            # name += "_librosa"
-            #--------------------------------------------------
             c = spect[1]
             
             waveform = vocoder.synthesize(c)
             
-            
-            sf.write(os.path.join(Config.dir_paths["output"], name + ".wav"), waveform, 16000)
+            sf.write(os.path.join(output_dir, name + ".wav"), waveform, 16000)
   
   
 if __name__ == "__main__":
@@ -159,7 +137,8 @@ if __name__ == "__main__":
     # directories
     input_dir = Config.dir_paths["input"]
     converted_data_dir = Config.dir_paths["metadata"]
-    output_file_dir = Config.dir_paths["output"]
+    autovc_name = os.path.split(args.model_path)[-1][:-5]
+    output_file_dir = os.path.join(Config.dir_paths["output"], autovc_name)
     metadata_name = Config.convert_metadata_name
 
     if not os.path.isdir(os.path.join(input_dir, source_speaker)):
@@ -179,13 +158,16 @@ if __name__ == "__main__":
     if args.vocoder == "griffin":
         from vocoders import GriffinLim
         vocoder = GriffinLim(device)
+        output_file_dir = os.path.join(output_file_dir, "griffin")
     elif args.vocoder == "wavenet":
         from vocoders import WaveNet
         vocoder_path = os.path.join(Config.dir_paths["networks"], Config.pretrained_names["wavenet"])
         vocoder = WaveNet(device, vocoder_path)
+        output_file_dir = os.path.join(output_file_dir, "wavenet")
     elif args.vocoder == "melgan":
         from vocoders import MelGan
         vocoder = MelGan(device)
+        output_file_dir = os.path.join(output_file_dir, "melgan")
 
     converter = Converter(device)
 
@@ -193,4 +175,4 @@ if __name__ == "__main__":
 
     output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_sources_{str(*source_list)}")
 
-    output_to_wav(output_data, vocoder)
+    output_to_wav(output_data, vocoder, output_file_dir)

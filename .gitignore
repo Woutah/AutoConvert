@@ -11,8 +11,7 @@ train_input
 autovc/train_wavs
 train
 checkpoints
-melgan
-sample
+vocoders/melgan/models
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

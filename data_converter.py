@@ -248,7 +248,6 @@ class Converter:
             new_state_dict[new_key] = val
         speaker_encoder.load_state_dict(new_state_dict)
         
-        #TODO: use existing embedding if file exists?
         
         num_uttrs = 10 # TODO: Why not just use all files?
         len_crop = 128
@@ -303,6 +302,19 @@ class Converter:
         return speaker_embeddings
 
 
+    def _check_embeddings(self, input_dir, speakers):
+        for speaker in speakers:
+            speaker_path = os.path.join(input_dir, speaker)
+            embedding_path = os.path.join(speaker_path, f"{speaker}_emb.npy")
+            if not os.path.exists(embedding_path):
+                print(f"{speaker} embedding not found!")
+                return False # TODO: Generate embedding here
+        
+        return True
+                
+        
+
+
     def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, skip_existing=True):
         """Convert wav files to input metadata
 
@@ -324,11 +336,12 @@ class Converter:
             
         speakers = [source, target]
         
-        # Convert audio to spectrograms
-        spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
-        
-        # Generate speaker embeddings
-        embeddings = self._spec_to_embedding(spec_dir, spects, skip_existing=skip_existing) 
+        if not skip_existing or not self._check_embeddings(spec_dir, speakers):
+            # Convert audio to spectrograms
+            spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
+            
+            # Generate speaker embeddings
+            embeddings = self._spec_to_embedding(spec_dir, spects, skip_existing=skip_existing) 
         
         # Create conversion metadata
         metadata = self._create_metadata(spec_dir, source, target, source_list)
@@ -406,35 +419,35 @@ class Converter:
             pickle.dump(metadata, handle)
  
     
-    def preprocess_melgan(self, mel):
-        with open("melgan/vctk_parallel_wavegan.v1/config.yml") as f:
-            config = yaml.load(f, Loader=yaml.Loader)
-        stats = "melgan/vctk_parallel_wavegan.v1/stats.h5"
+    # def preprocess_melgan(self, mel):
+    #     with open("melgan/vctk_parallel_wavegan.v1/config.yml") as f:
+    #         config = yaml.load(f, Loader=yaml.Loader)
+    #     stats = "melgan/vctk_parallel_wavegan.v1/stats.h5"
         
-        lin_out = librosa.feature.inverse.mel_to_stft(mel, sr=Config.audio_sr, n_fft=Config.n_fft, fmin=Config.fmin, fmax=Config.fmax) 
+    #     lin_out = librosa.feature.inverse.mel_to_stft(mel, sr=Config.audio_sr, n_fft=Config.n_fft, fmin=Config.fmin, fmax=Config.fmax) 
 
-        # Use MelGan mel format 
-        mel_out = logmelfilterbank(lin_out,
-                                    sampling_rate=config["sampling_rate"],
-                                    hop_size=config["hop_size"],
-                                    fft_size=config["fft_size"],
-                                    win_length=config["win_length"],
-                                    window=config["window"],
-                                    num_mels=config["num_mels"],
-                                    fmin=config["fmin"],
-                                    fmax=config["fmax"])
+    #     # Use MelGan mel format 
+    #     mel_out = logmelfilterbank(lin_out,
+    #                                 sampling_rate=config["sampling_rate"],
+    #                                 hop_size=config["hop_size"],
+    #                                 fft_size=config["fft_size"],
+    #                                 win_length=config["win_length"],
+    #                                 window=config["window"],
+    #                                 num_mels=config["num_mels"],
+    #                                 fmin=config["fmin"],
+    #                                 fmax=config["fmax"])
 
-        # Normalize melgan mel spect
-        scaler = StandardScaler()
-        if config["format"] == "hdf5":
-            scaler.mean_ = read_hdf5(stats, "mean")
-            scaler.scale_ = read_hdf5(stats, "scale")
-        elif config["format"] == "npy":
-            scaler.mean_ = np.load(stats)[0]
-            scaler.scale_ = np.load(stats)[1]
+    #     # Normalize melgan mel spect
+    #     scaler = StandardScaler()
+    #     if config["format"] == "hdf5":
+    #         scaler.mean_ = read_hdf5(stats, "mean")
+    #         scaler.scale_ = read_hdf5(stats, "scale")
+    #     elif config["format"] == "npy":
+    #         scaler.mean_ = np.load(stats)[0]
+    #         scaler.scale_ = np.load(stats)[1]
 
-        mel_out = scaler.transform(mel_out)
+    #     mel_out = scaler.transform(mel_out)
         
-        return mel_out
+    #     return mel_out
  
  
