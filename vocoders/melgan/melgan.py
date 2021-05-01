@@ -1,9 +1,9 @@
+import os
+
+import torch
+from parallel_wavegan.utils import download_pretrained_model, load_model
 from vocoders.base_vocoder import BaseVocoder
 
-from parallel_wavegan.utils import load_model, download_pretrained_model
-
-import os
-import torch
 
 class MelGan(BaseVocoder):
     def __init__(self, device, model_name="vctk_multi_band_melgan.v2"):

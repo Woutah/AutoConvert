@@ -3,24 +3,18 @@ import math
 import os
 import pickle
 from collections import OrderedDict
-import librosa
 
+import librosa
 import numpy as np
 import soundfile as sf
 import torch
 from librosa.filters import mel
-from librosa import resample
+from numpy.random import RandomState
 from scipy import signal
 from scipy.signal import get_window
 
-from numpy.random import RandomState
 from autovc.model_bl import D_VECTOR
 from config import Config
-
-from parallel_wavegan.utils import read_hdf5
-from sklearn.preprocessing import StandardScaler
-import yaml
-from parallel_wavegan.bin.preprocess import logmelfilterbank
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +27,8 @@ class Converter:
     
     def __init__(self, device):
         self._device = device
+        self._prng = RandomState(42) #TODO: should this be the same each time?
+        
         log.info("Using device {}".format(self._device))
   
     
@@ -73,9 +69,9 @@ class Converter:
             np.array: Mel spectrogram
         """
 
-        mel_basis = mel(16000, 1024, fmin=90, fmax=7600, n_mels=80).T
-        min_level = np.exp(-100 / 20 * np.log(10))
-        b, a = self._butter_highpass(30, 16000, order=5)
+        mel_basis = mel(Config.audio_sr, Config.n_fft, fmin=Config.fmin, fmax=Config.fmax, n_mels=Config.n_mels).T
+        min_level = np.exp(Config.min_level_db / 20 * np.log(10))
+        b, a = self._butter_highpass(30, Config.audio_sr, order=5)
 
         # Resample wav if needed
         if sample_rate != Config.audio_sr:
@@ -83,7 +79,7 @@ class Converter:
             print(f"Wav file with sr {sample_rate} != {Config.audio_sr}, Now resampling to {Config.audio_sr}, then try to write to {wav_path}")
 
             if wav_path:
-                sf.write(wav_path, wav, 16000) # Write downsampled file
+                sf.write(wav_path, wav, Config.audio_sr) # Write downsampled file
         
         # Remove drifting noise
         wav = signal.filtfilt(b, a, wav)
@@ -91,16 +87,16 @@ class Converter:
         # add a little random noise for model robustness
         if introduce_noise:
             log.info(f"Introducing random noise into wav.file")
-            prng = RandomState(42) #TODO: should this be the same each time?
-            wav = wav * 0.96 + (prng.rand(wav.shape[0])-0.5)*1e-06
+            
+            wav = wav * 0.96 + (self._prng.rand(wav.shape[0])-0.5)*1e-06
         
 
         # Compute spectrogram
-        D = self._pySTFT(wav).T
+        D = self._pySTFT(wav, fft_length=Config.n_fft, hop_length=Config.hop_length).T
         # Convert to mel and normalize
         D_mel = np.dot(D, mel_basis)
-        D_db = 20 * np.log10(np.maximum(min_level, D_mel)) - 16
-        S = np.clip((D_db + 100) / 100, 0, 1)    
+        D_db = 20 * np.log10(np.maximum(min_level, D_mel)) - Config.ref_level_db # amp to db
+        S = np.clip((D_db - Config.min_level_db) / -Config.min_level_db, 0, 1) # clip between 0-1
         
         return S
     
@@ -206,17 +202,24 @@ class Converter:
         for utterance in source_list:
             spect = np.load(os.path.join(input_dir, source, utterance + ".npy"))
             
-            # Split utterance 
-            spect_count = math.ceil(spect.shape[0]/len_crop) #Get amount of ~2-second spectrograms
-            # frames_per_spec = int(spect.shape[0]/spect_count) #get frames per spectrogram
-            frames_per_spec = 128
             spects = []
-            i = 0
-            for i in range(spect_count - 1):
-                spects.append(spect[frames_per_spec * i: frames_per_spec * (i+1), :] )
+            if len_crop > 0:
+            
+                # Split utterance 
+                spect_count = math.ceil(spect.shape[0]/len_crop) #Get amount of ~2-second spectrograms
+                # frames_per_spec = int(spect.shape[0]/spect_count) #get frames per spectrogram
+                
+                
+                i = 0
+                for i in range(spect_count - 1):
+                    spects.append(spect[len_crop * i: len_crop * (i+1), :] )
 
-            spects.append(spect[frames_per_spec * (i+1): , :] ) #append the rest
-            print("Amount of parts: {}".format(len(spects)))
+                spects.append(spect[len_crop * (i+1): , :] ) #append the rest
+                print("Amount of parts: {}".format(len(spects)))
+            else:
+                spects = [spect]
+                
+            
             metadata["source"][source]["utterances"][utterance] = spects
         
         # Target speaker embedding
@@ -246,7 +249,7 @@ class Converter:
         # Load speaker encoder
         network_dir = Config.dir_paths["networks"]
         speaker_encoder_name = Config.pretrained_names["speaker_encoder"]
-        speaker_encoder = D_VECTOR(dim_input=80, dim_cell=768, dim_emb=256).eval().to(self._device)
+        speaker_encoder = D_VECTOR(**Config.wavenet_arch).eval().to(self._device)
         c_checkpoint = torch.load(os.path.join(network_dir, speaker_encoder_name), map_location=self._device)     
         
         new_state_dict = OrderedDict()
@@ -256,8 +259,8 @@ class Converter:
         speaker_encoder.load_state_dict(new_state_dict)
         
         
-        num_uttrs = 10 # TODO: Why not just use all files?
-        len_crop = 128
+        num_uttrs = Config.emb_num_uttr # TODO: Why not just use all files?
+        len_crop = Config.emb_len_crop
         
         # if input_data is not None:
         spects = input_data
@@ -322,10 +325,8 @@ class Converter:
         
         return True
                 
-        
 
-
-    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, skip_existing=True):
+    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, split_spects=True, skip_existing=True):
         """Convert wav files to input metadata
 
         Args:
@@ -349,12 +350,23 @@ class Converter:
         # Convert audio to spectrograms
         spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
 
-        if not skip_existing or not self._check_embeddings(spec_dir, speakers):    
+        if not skip_existing or not self._check_embeddings(spec_dir, speakers):
+                
+        # # Split utterence into ~2s parts or not
+        # if split_spects:
+        #     len_crop = Config.len_crop
+        # else:
+        #     len_crop = 0
+        
+        # if not skip_existing or not self._check_embeddings(spec_dir, speakers):
+        #     # Convert audio to spectrograms
+        #     spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
+            
             # Generate speaker embeddings
             embeddings = self._spec_to_embedding(spec_dir, spects, skip_existing=skip_existing) 
         
         # Create conversion metadata
-        metadata = self._create_metadata(spec_dir, source, target, source_list)
+        metadata = self._create_metadata(spec_dir, source, target, source_list, len_crop=len_crop)
         
         with open(os.path.join(output_dir, output_file), 'wb') as handle:
             pickle.dump(metadata, handle) 
@@ -387,8 +399,6 @@ class Converter:
             speakers.append(utterances)
    
         return speakers
-   
-
  
  
     def generate_train_data(self, input_dir, output_dir, output_file):
