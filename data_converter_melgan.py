@@ -27,7 +27,7 @@ import yaml
 
 from parallel_wavegan.utils import download_pretrained_model, load_model
 from data_converter import Converter
-
+from config import Config
 
 
 class MelganConverter(Converter):
@@ -46,7 +46,7 @@ class MelganConverter(Converter):
         except:
             log.error(f"Unable to laod in yaml config at path: {melgan_config_path}, unknown desired settings (sampling rate etc.) exiting...")
             exit(0)
-        download_pretrained_model("vctk_multi_band_melgan.v2", "melgan") #download model
+        download_pretrained_model("vctk_multi_band_melgan.v2", Config.dir_paths["melgan_download_location"]) #download model
         self.melgan_model = None
         self.melgan_stats_path = melgan_stats_path
 
