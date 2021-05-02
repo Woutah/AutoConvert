@@ -48,7 +48,7 @@ if __name__ == '__main__':
     # Training configuration.
     parser.add_argument('--model_path', type=str, default=None) #Load a pretrained model
 
-    parser.add_argument('--data_dir', type=str, default='.\\train', help=f"Folder in which train.pkl resides, as well as a folder with embeddings for each speaker, of format:"
+    parser.add_argument('--data_dir', type=str, default='train', help=f"Folder in which train.pkl resides, as well as a folder with embeddings for each speaker, of format:"
                                                                         f"|-data_dir                  (the specified folder)\n"
                                                                         f"  |-train.pkl               (main metadata file)\n"
                                                                         f"  |-speaker_folder          (for every speaker)\n"

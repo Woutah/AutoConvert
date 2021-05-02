@@ -46,10 +46,10 @@ class Solver(object):
             g_checkpoint = torch.load(self.model_path, map_location=self.device) 
             self.G.load_state_dict(g_checkpoint['model'])
             
-            if "optimizer" in g_checkpoint.keys():
-                self.g_optimizer.load_state_dict(g_checkpoint["optimizer"])
-            else:
-                print("WARNING: didn't load optimizer state!!!")
+            # if "optimizer" in g_checkpoint.keys():
+            #     self.g_optimizer.load_state_dict(g_checkpoint["optimizer"])
+            # else:
+            #     print("WARNING: didn't load optimizer state!!!")
                 
             if "steps" in g_checkpoint.keys():
                 self.start_step = g_checkpoint["steps"]
