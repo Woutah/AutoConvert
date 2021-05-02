@@ -25,6 +25,7 @@ class Config:
         "output" : "./output",
         "metadata" : "./metadata",
         "spectrograms" : "./spectrograms",
+        "melgan_download_location" : "./vocoders/melgan/",
         "melgan_config_path": "./vocoders/melgan/config.yml",
         "melgan_stats_path": "./vocoders/melgan/stats.h5"
     }
