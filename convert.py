@@ -14,6 +14,7 @@ import torch
 from autovc.model_vc import Generator
 from config import Config
 from data_converter import Converter
+from data_converter_melgan import MelganConverter
 
 logging.basicConfig(level=logging.INFO) 
 log = logging.getLogger(__name__)
@@ -90,7 +91,7 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None, s
     return spect_vc
 
 
-def output_to_wav(output_data, vocoder, output_dir):
+def output_to_wav(output_data, vocoder, output_dir, sample_rate):
         """Convert mel spectograms to audio files
 
         Args:
@@ -105,7 +106,7 @@ def output_to_wav(output_data, vocoder, output_dir):
             
             waveform = vocoder.synthesize(c)
             
-            sf.write(os.path.join(output_dir, name + ".wav"), waveform, Config.audio_sr)
+            sf.write(os.path.join(output_dir, name + ".wav"), waveform, sample_rate)
   
   
 if __name__ == "__main__":
@@ -125,11 +126,14 @@ if __name__ == "__main__":
                         help="Whether to force preprocessing or not")
     parser.add_argument("--stop_split", action="store_false",
                         help="Whether to split spects into ~2s parts before processing by AutoVC")
+    parser.add_argument("--spectrogram_type", type=str, choices=["standard", "melgan"], default="standard",
+                            help="What converter to use, use 'melgan' to convert wavs to 24khz fft'd spectrograms used in the parallel melgan implementation")
     args = parser.parse_args()
 
     source_speaker = args.source if args.source is not None else "p225"
     target_speaker = args.target if args.target is not None else "Wouter"
-    source_list = args.source_wav if args.source_wav is not None else ["p225_024"]
+    source_list = args.source_wav if args.source_wav is not None else ["p225_003"]
+    # Config.num_ut
 
     # directories
     input_dir = Config.dir_paths["input"]
@@ -166,12 +170,15 @@ if __name__ == "__main__":
         vocoder = MelGan(device)
         output_file_dir = os.path.join(output_file_dir, "melgan")
 
-    converter = Converter(device)
+    if args.spectrogram_type == "standard":
+        converter = Converter(device)
+    elif args.spectrogram_type == "melgan":
+        converter = MelganConverter(device, Config.dir_paths["melgan_config_path"], Config.dir_paths["melgan_stats_path"])
 
     skip = not args.force_preprocess
     split = args.stop_split
-    input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, split_spects=split, skip_existing=skip)
+    input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=skip) #, split_spects=split
 
     output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_sources_{str(*source_list)}")
 
-    output_to_wav(output_data, vocoder, output_file_dir)
+    output_to_wav(output_data, vocoder, output_file_dir, 24000)

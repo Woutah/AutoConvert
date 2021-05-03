@@ -15,6 +15,7 @@ from scipy.signal import get_window
 
 from autovc.model_bl import D_VECTOR
 from config import Config
+import utility
 
 log = logging.getLogger(__name__)
 
@@ -118,7 +119,11 @@ class Converter:
   
         # If no speakers specified, load all speakers
         if speakers is None:
-            _, sub_dirs, _ = next(os.walk(input_dir))
+            # cur_path = utility.get_full_path(input_dir)
+            cur_path = input_dir
+            if not os.path.exists(cur_path):
+                log.error(f"Error: input dir {input_dir} does not exist")
+            _, sub_dirs, _ = next(os.walk(cur_path))
             speakers = sub_dirs
 
         #for subdir in sorted(subdirList): #TODO: load from file if already exist? parameter that determines whether result should be saved
@@ -311,7 +316,7 @@ class Converter:
                     speaker_embeddings[speaker], allow_pickle=False)
                
             
-        print(f"Extracted all speaker embeddings to {save_path}")
+        print(f"Extracted speaker embedding to {save_path}")
         return speaker_embeddings
 
 

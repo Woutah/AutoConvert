@@ -44,6 +44,7 @@ model = model.eval().to(device)
 #================Read audio=========================
 audio, sr = sf.read("./input/p226/p226_003.wav")
 
+
 #===============
 melganconverter = MelganConverter(device, Config.dir_paths["melgan_config_path"],  Config.dir_paths["melgan_stats_path"])
 # spect = melganconverter._wav_to_melgan_spec(audio, sr)

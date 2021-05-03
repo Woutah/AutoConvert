@@ -241,15 +241,18 @@ class MelganConverter(Converter):
 
         #========================================== Melgan spectrograms===========================
         # Convert audio to melgan(!) spectrograms
-        spects = self._wav_dir_to_spec_dir(input_dir, spec_dir_melgan, speakers, skip_existing=skip_existing, conversion_method=self._wav_to_melgan_spec)
+        spects_melgan = self._wav_dir_to_spec_dir(input_dir, spec_dir_melgan, speakers, skip_existing=skip_existing, conversion_method=self._wav_to_melgan_spec)
 
         #===========================================Speaker embeddings using AutoVC spectrograms===========================
-        if not skip_existing or not self._check_embeddings(spec_dir_autovc, speakers):
+        if not skip_existing or not self._check_embeddings(spec_dir_melgan, speakers):
+            log.info("Now handling creating embeddings....")
             # Convert audio to spectrograms
-            spects = self._wav_dir_to_spec_dir(input_dir, spec_dir_autovc, speakers, skip_existing=skip_existing)
+            spects_autovc = self._wav_dir_to_spec_dir(input_dir, spec_dir_autovc, speakers, skip_existing=skip_existing)
 
             # Generate speaker embeddings, put them in the actual dir
-            embeddings = self._spec_to_embedding(spec_dir_melgan, spects, skip_existing=skip_existing) 
+            embeddings = self._spec_to_embedding(spec_dir_melgan, spects_autovc, skip_existing=skip_existing)
+        else:    
+            log.info("Embeddings already found, continuing without creation...")
         
         #==========================================Create conversion metadata========================================
         metadata = self._create_metadata(spec_dir_melgan, source, target, source_list) #create metadata in encoder directory
