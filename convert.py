@@ -130,10 +130,15 @@ if __name__ == "__main__":
                             help="What converter to use, use 'melgan' to convert wavs to 24khz fft'd spectrograms used in the parallel melgan implementation")
     args = parser.parse_args()
 
-    source_speaker = args.source if args.source is not None else "p225"
-    target_speaker = args.target if args.target is not None else "Wouter"
-    source_list = args.source_wav if args.source_wav is not None else ["p225_003"]
+    target_speaker = args.source if args.source is not None else "p3"
+    source_speaker = args.target if args.target is not None else "p226"
+    source_list = args.source_wav if args.source_wav is not None else ["p226_023"]
+    # source_speaker = args.target if args.target is not None else "Wouter"
+    # source_list = args.source_wav if args.source_wav is not None else ["1"]
     # Config.num_ut
+    #python convert.py --spectrogram_type=melgan --model_path=./checkpoints/20210503_melgan_autovc_580000
+    #python convert.py --spectrogram_type=melgan --model_path=./checkpoints/20210503_melgan_autovc_580000.ckpt --vocoder=melgan
+
 
     # directories
     input_dir = Config.dir_paths["input"]

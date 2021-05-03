@@ -28,7 +28,7 @@ def main(args, device):
     # Data loader.
     vcc_loader = get_loader(args.data_dir, args.batch_size, args.len_crop, crop_range=args.crop_range)
     
-    solver = Solver(vcc_loader, args, device)
+    solver = Solver(vcc_loader, args, device, args.start_learning_rate)
 
     solver.train()
         
@@ -61,7 +61,8 @@ if __name__ == '__main__':
     parser.add_argument('--len_crop', type=int, default=128, help='dataloader output sequence length')
     parser.add_argument('--save_freq', type=int, default=10000)
     parser.add_argument('--crop_range', type=tuple, default=None)
-    
+    parser.add_argument("--start_learning_rate", type=float, default=0.0001, help="The start learning rate of the adam optimizer, defaults to 0.0001")
+
     #Conversion method of spectrograms
     parser.add_argument("--spectrogram_type", type=str, choices=["standard", "melgan"], default="standard",
                             help="What converter to use, use 'melgan' to train the converter + model output on 24khz fft'd spectrograms used in the parallel melgan implementation")

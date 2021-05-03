@@ -9,7 +9,7 @@ import os
 
 class Solver(object):
 
-    def __init__(self, vcc_loader, config, device):
+    def __init__(self, vcc_loader, config, device, start_learning_rate):
         """Initialize configurations."""
 
         # Data loader.
@@ -37,7 +37,7 @@ class Solver(object):
             os.makedirs(self.checkpoint_dir)
 
         # Build the model and tensorboard.
-        self.build_model()
+        self.build_model(start_learning_rate)
         self.model_path = config.model_path
         
         self.start_step = 0
@@ -55,11 +55,11 @@ class Solver(object):
                 self.start_step = g_checkpoint["steps"]
 
             
-    def build_model(self):
+    def build_model(self, start_learning_rate):
         
         self.G = Generator(self.dim_neck, self.dim_emb, self.dim_pre, self.freq)        
         
-        self.g_optimizer = torch.optim.Adam(self.G.parameters(), 0.0001)
+        self.g_optimizer = torch.optim.Adam(self.G.parameters(), start_learning_rate)
         
         self.G.to(self.device)
         
