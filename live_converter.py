@@ -149,8 +149,9 @@ class LiveConverter():
                 self.processed_spect_queue.pop(SPECT_CROP_LEN//SPECT_HOPS_PER_LEN - SPECT_BUFFER) 
 
 
-                spect_torch = torch.from_numpy(spect[ :, :]).to(device)
-                wav_data = self.vocoder.synthesize(spect_torch)
+                # spect_torch = torch.from_numpy(spect[ :, :]).to(device) # TODO: change if bad
+                
+                wav_data = self.vocoder.synthesize(spect)
                 # log.info(f"Index [{len(wav_data)//SPECT_HOPS_PER_LEN} :] of wav with size {len(wav_data)}")
                 # self.processed_wav_queue.append(wav_data[len(wav_data)//SPECT_CROP_LEN:])  
                 # self.processed_wav_queue.append(wav_data[len(wav_data)//SPECT_HOPS_PER_LEN:]) 
@@ -250,7 +251,7 @@ class LiveConverter():
                 # target_spect_np = target_audio[0].cpu().numpy() #load to numpy
 
                 # target_audio = vocoder.synthesize(target_spect[0])
-                self.processed_spect_queue.append(target_spect[0])
+                self.processed_spect_queue.append(target_spect[0].cpu())
 
 
                 # ============== To draw spectrograms =================:
@@ -635,8 +636,8 @@ if __name__ == "__main__":
     log.info("Started live_convert.py")
     # live_convert(args, device, converter, melgan_config, G, speaker_encoder, vocoder)
     voice_converter = LiveConverter(melgan_config, melgan_stats, device, converter, G, speaker_encoder, target_embedding, vocoder, source_embedding)
-    try:
-        voice_converter.start_main_loop()
-    except Exception as err:
-        log.error({err})
-        exit(0)
+    # try:
+    voice_converter.start_main_loop()
+    # except Exception as err:
+        # log.error({err})
+        # exit(0)
