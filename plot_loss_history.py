@@ -47,7 +47,8 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--checkpoint_path', type=str, default="./checkpoints/20210503_melgan_autovc_580000.ckpt")
+    # parser.add_argument('--checkpoint_path', type=str, default="./checkpoints/20210503_melgan_autovc_580000.ckpt")
+    parser.add_argument('--checkpoint_path', type=str, default="./checkpoints/20210504_melgan_autovc_959999.ckpt")
     config = parser.parse_args()
 
     if config.checkpoint_path == None:

@@ -206,7 +206,7 @@ class MelganConverter(Converter):
 
 
 
-    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, skip_existing=True):
+    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, skip_existing=True, len_crop=128):
         """Convert wav files to input metadata (used by convert.py to generate examples)
 
         Args:
@@ -246,7 +246,7 @@ class MelganConverter(Converter):
             log.info("Embeddings already found, continuing without creation...")
         
         #==========================================Create conversion metadata========================================
-        metadata = self._create_metadata(spec_dir_melgan, source, target, source_list) #create metadata in encoder directory
+        metadata = self._create_metadata(spec_dir_melgan, source, target, source_list, len_crop=len_crop) #create metadata in encoder directory
         
         with open(os.path.join(output_dir, output_file), 'wb') as handle:
             pickle.dump(metadata, handle) 
