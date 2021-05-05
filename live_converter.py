@@ -85,7 +85,7 @@ class LiveConverter():
         log.info("Initializing Big-Chunkus")
         self.chunk_queue = ThreadNumpyQueue(size=processing_buffer_size, roll_when_full=False, dtype=np.float32)
         self.processed_spect_queue = ThreadNumpyQueue(size=  (4096, 80) , roll_when_full=False, dtype=np.float32)
-        self.processed_spect_queue.append([[0] * 80] * 256) #Insert 256 empty frames
+        # self.processed_spect_queue.append([[0] * 80] * 256) #Insert 256 empty frames
         # self.processed_spect_queue = ThreadNumpyQueue(size=  (int(processing_buffer_size/self.hop_size), 80) , roll_when_full=False, dtype="Float32")
 
         self.processed_wav_queue = ThreadNumpyQueue(size=processing_buffer_size, roll_when_full=False, dtype=np.float32)
@@ -133,7 +133,7 @@ class LiveConverter():
     def dynamic_vocoder(self):
         SPECT_CROP_LEN = 512
         SPECT_HOPS_PER_LEN = 2 #TODO: implement overlap between consecutive frames #ATTENTION: SHOULD BE DIVISIBLE BY SPECT CROP LEN
-        SPECT_BUFFER = 2
+        # SPECT_BUFFER = 2
 
         while True:
             while(len(self.processed_spect_queue)) > SPECT_CROP_LEN: # //SPECT_HOPS_PER_LEN:
@@ -141,21 +141,22 @@ class LiveConverter():
 
                 # log.info(f"Processed spect queue size: {len(self.processed_spect_queue)}")
                 # data = self.processed_spect_queue.peek(SPECT_CROP_LEN):
-                spect = self.processed_spect_queue.peek(SPECT_CROP_LEN)
-                log.info(f"Popping {SPECT_CROP_LEN//SPECT_HOPS_PER_LEN} items")
+                # spect = self.processed_spect_queue.peek(SPECT_CROP_LEN)
+                spect = self.processed_spect_queue.pop(SPECT_CROP_LEN)
+                # log.info(f"Popping {SPECT_CROP_LEN//SPECT_HOPS_PER_LEN} items")
                 # self.processed_spect_queue.pop(SPECT_CROP_LEN//SPECT_HOPS_PER_LEN) 
                 
                 #Don't pop everything as to use overlap in next iteration
-                self.processed_spect_queue.pop(SPECT_CROP_LEN//SPECT_HOPS_PER_LEN - SPECT_BUFFER) 
+                # self.processed_spect_queue.pop(SPECT_CROP_LEN//SPECT_HOPS_PER_LEN)# - SPECT_BUFFER) 
 
 
                 spect_torch = torch.from_numpy(spect[ :, :]).to(device)
                 wav_data = self.vocoder.synthesize(spect_torch)
                 # log.info(f"Index [{len(wav_data)//SPECT_HOPS_PER_LEN} :] of wav with size {len(wav_data)}")
-                # self.processed_wav_queue.append(wav_data[len(wav_data)//SPECT_CROP_LEN:])  
+                self.processed_wav_queue.append(wav_data)  
                 # self.processed_wav_queue.append(wav_data[len(wav_data)//SPECT_HOPS_PER_LEN:]) 
                 log.info(f"Appending {len(wav_data)} to processed_wav_queue")
-                self.processed_wav_queue.append(wav_data[len(wav_data)//SPECT_HOPS_PER_LEN - 1:])  
+                # self.processed_wav_queue.append(wav_data[len(wav_data)//SPECT_HOPS_PER_LEN - 1:])  
                 
 
     def get_processed_frame(self, in_data, frame_count, time_info, status):
@@ -175,8 +176,8 @@ class LiveConverter():
     def data_processor(self):
         """Continuously generates converted spectrograms from input sounds and puts them in the converted wav queue
         """
-        CHUNK_COUNT = 40 #How many chunks to process simultaneously 
-        # CHUNK_COUNT = 20 # <--------- This works ok
+        # CHUNK_COUNT = 40 #How many chunks to process simultaneously 
+        CHUNK_COUNT = 20 # <--------- This works ok
         #========To draw spectrograms dynamically:
         # import matplotlib.pyplot as plt
         # # fig, ax = plt.subplots(1)
@@ -195,8 +196,9 @@ class LiveConverter():
                 #Optie 1
                 wav = self.chunk_queue.peek(CHUNK_COUNT * self.fft_size).copy()
                 self.chunk_queue.pop(CHUNK_COUNT * self.fft_size - (self.fft_size//self.hop_size - 1) * self.hop_size)
-
+                
                 # wav = wav[:-(self.fft_size//self.hop_size - 1) * self.hop_size]
+                wav = wav[: -self.hop_size]
                 
                 
                 
@@ -205,12 +207,12 @@ class LiveConverter():
                 # self.chunk_queue.pop(self.hop_size * 0.5)
                 # source_spect = converter._wav_to_melgan_spec(np.array(wav).flatten(), sampling_rate)                  #            1.convert recorded audio to spect
                 #===========================Trim silence=====================
-                wav, _ = librosa.effects.trim(
-                                                wav, 
-                                                top_db = self.trim_top_db,
-                                                frame_length= self.trim_frame_length,
-                                                hop_length = self.trim_hop_length
-                                            )
+                # wav, _ = librosa.effects.trim(
+                #                                 wav, 
+                #                                 top_db = self.trim_top_db,
+                #                                 frame_length= self.trim_frame_length,
+                #                                 hop_length = self.trim_hop_length
+                #                             )
                 
                 #===========================To melgan spect===============================
                 
@@ -228,9 +230,9 @@ class LiveConverter():
                 mel_basis = librosa.filters.mel(self.sampling_rate, self.fft_size, self.num_mels, fmin, fmax)
                 source_spect = np.log10(np.maximum(1e-10, np.dot(spc, mel_basis.T))) #Create actual source spect
                 source_spect = self.scaler.transform(source_spect)
-                # self.processed_spect_queue.append(source_spect)
-                # # # return
-                # continue
+                
+                self.processed_spect_queue.append(source_spect)
+                continue
                 
                 #===========================Through model==============================
                 source_spect = torch.from_numpy(source_spect[np.newaxis, :, :]).to(self.device)                    # (to torch)
@@ -574,6 +576,8 @@ if __name__ == "__main__":
 
     #=======================Arguments=======================
     parser = argparse.ArgumentParser(description='Transfer voices using pretrained AutoVC')
+    # parser.add_argument("--model_path", type=str, default="./checkpoints/20210504_melgan_lencrop514_autovc_1229998.ckpt",
+    #                     help="Path to trained AutoVC model")
     parser.add_argument("--model_path", type=str, default="./checkpoints/20210504_melgan_lencrop514_autovc_1229998.ckpt",
                         help="Path to trained AutoVC model")
     # parser.add_argument("--vocoder", type=str, default="griffin", choices=["griffin", "wavenet", "melgan"],
