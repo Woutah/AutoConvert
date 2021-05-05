@@ -230,6 +230,8 @@ class Converter:
         # Target speaker embedding
         speaker_emb = np.load(os.path.join(input_dir, target, target + "_emb.npy"))
         metadata["target"][target]["emb"] = speaker_emb
+        
+        print("Created metadata from folder: {}".format(input_dir))
             
         return metadata
 
@@ -345,7 +347,7 @@ class Converter:
         Returns:
             dict: Metadata object (See README.md for format)
         """
-        spec_dir = Config.dir_paths["spectrograms"] # Where to save generated spects
+        spec_dir = os.path.join(Config.dir_paths["spectrograms"], "autovc") # Where to save generated spects
         
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
@@ -355,13 +357,15 @@ class Converter:
         # Convert audio to spectrograms
         spects = self._wav_dir_to_spec_dir(input_dir, spec_dir, speakers, skip_existing=skip_existing)
 
+        # # Split utterence into ~2s parts or not
+        if split_spects:
+            len_crop = Config.len_crop
+        else:
+            len_crop = 0
+
         if not skip_existing or not self._check_embeddings(spec_dir, speakers):
                 
-        # # Split utterence into ~2s parts or not
-        # if split_spects:
-        #     len_crop = Config.len_crop
-        # else:
-        #     len_crop = 0
+        
         
         # if not skip_existing or not self._check_embeddings(spec_dir, speakers):
         #     # Convert audio to spectrograms

@@ -20,14 +20,14 @@ class Config:
     
     
     dir_paths = {
-        "networks" : "./networks",
-        "input" : "./input",
-        "output" : "./output",
-        "metadata" : "./metadata",
-        "spectrograms" : "./spectrograms",
-        "melgan_download_location" : "./vocoders/melgan/",
-        "melgan_config_path": "./vocoders/melgan/config.yml",
-        "melgan_stats_path": "./vocoders/melgan/stats.h5"
+        "networks" : "networks",
+        "input" : "input",
+        "output" : "output",
+        "metadata" : "metadata",
+        "spectrograms" : "spectrograms",
+        "melgan_download_location" : "vocoders/melgan/models/",
+        "melgan_config_path": "vocoders/melgan/models/vctk_multi_band_melgan.v2/config.yml",
+        "melgan_stats_path": "vocoders/melgan/models/vctk_multi_band_melgan.v2/stats.h5"
     }
     
     pretrained_names = {

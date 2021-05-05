@@ -164,6 +164,8 @@ if __name__ == "__main__":
     if device.type == "cuda":
         print(torch.cuda.get_device_name(0))
         
+    spectrogram_type = "standard"
+        
     if args.vocoder == "griffin":
         from vocoders import GriffinLim
         vocoder = GriffinLim(device)
@@ -175,12 +177,13 @@ if __name__ == "__main__":
         output_file_dir = os.path.join(output_file_dir, "wavenet")
     elif args.vocoder == "melgan":
         from vocoders import MelGan
+        spectrogram_type = "melgan"
         vocoder = MelGan(device)
         output_file_dir = os.path.join(output_file_dir, "melgan")
 
-    if args.spectrogram_type == "standard":
+    if spectrogram_type == "standard":
         converter = Converter(device)
-    elif args.spectrogram_type == "melgan":
+    elif spectrogram_type == "melgan":
         converter = MelganConverter(device, Config.dir_paths["melgan_config_path"], Config.dir_paths["melgan_stats_path"])
 
     skip = not args.force_preprocess
@@ -188,4 +191,5 @@ if __name__ == "__main__":
 
     output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_lencrop{args.len_crop}_sources_{str([ str(i)+'_' for i in source_list])}", len_crop=args.len_crop)
 
-    output_to_wav(output_data, vocoder, output_file_dir, 24000)
+    output_to_wav(output_data, vocoder, output_file_dir, Config.audio_sr)
+
