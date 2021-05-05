@@ -28,7 +28,7 @@ def pad_seq(x, base=32):
     return np.pad(x, ((0,len_pad),(0,0)), 'constant'), len_pad
 
 
-def inference(output_dir, device, model_path, input_dir=None, input_data=None, savename = "results", len_crop=128): 
+def inference(output_dir, device, model_path, input_dir=None, input_data=None, savename = "results"): 
     # Define AutoVC model
     G = Generator(**Config.autovc_arch).eval().to(device)
     g_checkpoint = torch.load(model_path, map_location=device) 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
                             help="What converter to use, use 'melgan' to convert wavs to 24khz fft'd spectrograms used in the parallel melgan implementation")
     args = parser.parse_args()
 
-    target_speaker = args.source if args.source is not None else "p226"
+    target_speaker = args.source if args.source is not None else "p225"
     source_speaker = args.target if args.target is not None else "Wouter"
     source_list = args.source_wav if args.source_wav is not None else ["3", "4", "5", "6", "7"]
     # source_speaker = args.target if args.target is not None else "Wouter"
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     skip = not args.force_preprocess
     input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=skip, len_crop=args.len_crop) #split_spects=split)
 
-    output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_lencrop{args.len_crop}_sources_{str([ str(i)+'_' for i in source_list])}", len_crop=args.len_crop)
+    output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_lencrop{args.len_crop}_sources_{str([ str(i)+'_' for i in source_list])}")
 
     output_to_wav(output_data, vocoder, output_file_dir, Config.audio_sr)
 
