@@ -331,7 +331,7 @@ class Converter:
         return True
                 
 
-    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, split_spects=True, skip_existing=True):
+    def wav_to_convert_input(self, input_dir, source, target, source_list, output_dir, output_file, split_spects=True, skip_existing=True, len_crop=128):
         """Convert wav files to input metadata
 
         Args:

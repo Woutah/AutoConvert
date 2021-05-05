@@ -79,7 +79,7 @@ class Utterances(data.Dataset):
         
         len_crop = self.len_crop
         if self.crop_range is not None: #if len_crop range is specified, use that instead
-            len_crop = np.random.randint(*self.crop_range)
+            len_crop = np.random.randint(self.crop_range[0], self.crop_range[1])
 
 
         if tmp.shape[0] < len_crop:
