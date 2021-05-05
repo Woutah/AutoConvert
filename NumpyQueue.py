@@ -3,7 +3,7 @@ import numpy as np
 import threading
 
 class NumpyQueue(): #TODO: make threadsafe
-    def __init__(self, size, roll_when_full=False, dtype='float32'):
+    def __init__(self, size, roll_when_full=False, dtype=np.float32):
         self._arr = np.empty(size, dtype=dtype)
         self._cur_idx = 0
         self.roll_when_full = roll_when_full
@@ -39,7 +39,7 @@ class NumpyQueue(): #TODO: make threadsafe
 
         vals = self._arr[0: count].copy()
         self._cur_idx -=count
-        self._arr = np.roll(self._arr, -count)
+        self._arr = np.roll(self._arr, -count) #[1, 2, 3, 4|] --> [3, 4,| 1, 2]
         return vals
 
 class ThreadNumpyQueue(NumpyQueue): #TODO: although thread unsafe methods are now safe, typing the functions out and only using the locks at the last line might be more efficient
@@ -126,7 +126,12 @@ if __name__ == "__main__":
 
     testqueue.pop(900)
     assert np.all(testqueue.pop(100) == np.array([9] * 100))
-        
+    
+
+    for i in range(10000):
+        testqueue.append([i])
+
+    assert(testqueue.pop(len(testqueue)) )
 
     print("All assertions valid!")
     

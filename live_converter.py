@@ -33,7 +33,8 @@ FORMAT=pyaudio.paFloat32
 CHANNELS = 1
 # RATE = 24000
 # CHUNK = 2048
-CHUNK= 4096
+# CHUNK= 4096
+CHUNK = 4000
 # RECORD_SECONDS = 10 #300 * 128 / 24000 #The amount of seconds to record --> hop size (300) * crop_len (128) = amount of samples used per prediction
 WAVE_OUTPUT_FILENAME = "./sample_recording.wav"
 
@@ -42,7 +43,7 @@ WAVE_OUTPUT_FILENAME = "./sample_recording.wav"
 
 
 class LiveConverter():
-    def __init__(self, melgan_config, melgan_stats, device, melgan_converter, generator, speaker_encoder, target_embedding, vocoder, source_embedding, processing_buffer_size=24000 * 10):
+    def __init__(self, melgan_config, melgan_stats, device, melgan_converter, generator, speaker_encoder, target_embedding, vocoder, source_embedding, processing_buffer_size=24000 * 20):
         #==================Melgan properties=========================
         #General properties
         self.melgan_config = melgan_config
@@ -91,7 +92,7 @@ class LiveConverter():
         self.processed_wav_queue = ThreadNumpyQueue(size=processing_buffer_size, roll_when_full=False, dtype=np.float32)
         # self.source_embed = torch.tensor(np.zeros(256, dtype=np.float32)).to(device)
         self.source_embedding = source_embedding
-        
+        self.lock = threading.Lock()
 
         self._unprocessed_frames = 0
         log.info("Done initializing LiveConverter")
@@ -121,8 +122,9 @@ class LiveConverter():
         # print(f"{type(in_data)}")
         if type(in_data) == bytes:
             # converted = np.frombuffer(in_data, 'Float32')
-            converted = np.frombuffer(in_data, dtype="float32")
-            self.chunk_queue.append(converted)
+            with self.lock:
+                converted = np.frombuffer(in_data, dtype="float32")
+                self.chunk_queue.append(converted)
         else:
             log.info(f"Ecountered non-byte buffer of type {type(in_data)}")
         # log.info(f"Unprocessed frames: {len(self.chunk_queue)}, len converted = {len(converted)}, { np.all(converted == popped)}, {converted}, {popped}\n")
@@ -176,8 +178,8 @@ class LiveConverter():
     def data_processor(self):
         """Continuously generates converted spectrograms from input sounds and puts them in the converted wav queue
         """
-        # CHUNK_COUNT = 40 #How many chunks to process simultaneously 
-        CHUNK_COUNT = 20 # <--------- This works ok
+        CHUNK_COUNT = 20 #How many chunks to process simultaneously 
+        # CHUNK_COUNT = 20 # <--------- This works ok
         #========To draw spectrograms dynamically:
         # import matplotlib.pyplot as plt
         # # fig, ax = plt.subplots(1)
@@ -198,7 +200,7 @@ class LiveConverter():
                 self.chunk_queue.pop(CHUNK_COUNT * self.fft_size - (self.fft_size//self.hop_size - 1) * self.hop_size)
                 
                 # wav = wav[:-(self.fft_size//self.hop_size - 1) * self.hop_size]
-                wav = wav[: -self.hop_size]
+                # wav = wav[: -self.hop_size]
                 
                 
                 
@@ -229,10 +231,14 @@ class LiveConverter():
                 
                 mel_basis = librosa.filters.mel(self.sampling_rate, self.fft_size, self.num_mels, fmin, fmax)
                 source_spect = np.log10(np.maximum(1e-10, np.dot(spc, mel_basis.T))) #Create actual source spect
+                #TODO: should this be used here?                 
+                # wav = np.pad(wav, (0, self.melgan_config["fft_size"]), mode="reflect")
+                # wav = wav[:len(mel) * self.melgan_config["hop_size"]]
+
                 source_spect = self.scaler.transform(source_spect)
-                
-                self.processed_spect_queue.append(source_spect)
-                continue
+
+                # self.processed_spect_queue.append(source_spect)
+                # continue
                 
                 #===========================Through model==============================
                 source_spect = torch.from_numpy(source_spect[np.newaxis, :, :]).to(self.device)                    # (to torch)
@@ -272,6 +278,7 @@ class LiveConverter():
                                                 input=True,
                                                 # frames_per_buffer=CHUNK, 
                                                 stream_callback = self.process_recording
+                                                # input_device_index=2
                                                 )
 
 
@@ -284,9 +291,9 @@ class LiveConverter():
                                                 rate=self.sampling_rate,
                                                 frames_per_buffer=CHUNK, 
                                                 output=True,
-                                                stream_callback=self.get_processed_frame
+                                                stream_callback=self.get_processed_frame,
                                                 # stream_callback=self.get_loopback_frame
-                                                # output_device_index=2
+                                                # output_device_index=1
                                             )
 
         # log.info("Now starting continuous conversion process")
@@ -411,11 +418,11 @@ def test_convert(args, device, melgan_converter, melgan_config, generator, speak
     
     chunk_queue = ThreadNumpyQueue(size=TEST_LENGTH, roll_when_full=False)
     
-    for i in range(3):
-        while len(chunk_queue) < TEST_LENGTH:
-            data = stream.read(CHUNK)
-            chunk_queue.append(np.frombuffer(data, dtype=np.float32))
-        chunk_queue.pop(TEST_LENGTH)
+    # for i in range(3):
+    #     while len(chunk_queue) < TEST_LENGTH:
+    #         data = stream.read(CHUNK)
+    #         chunk_queue.append(np.frombuffer(data, dtype=np.float32))
+    #     chunk_queue.pop(TEST_LENGTH)
 
     while len(chunk_queue) < TEST_LENGTH:
         data = stream.read(CHUNK)
