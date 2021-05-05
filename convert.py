@@ -28,7 +28,7 @@ def pad_seq(x, base=32):
     return np.pad(x, ((0,len_pad),(0,0)), 'constant'), len_pad
 
 
-def inference(output_dir, device, model_path, input_dir=None, input_data=None, savename = "results", len_crop=128): 
+def inference(output_dir, device, model_path, input_dir=None, input_data=None, savename = "results"): 
     # Define AutoVC model
     G = Generator(**Config.autovc_arch).eval().to(device)
     g_checkpoint = torch.load(model_path, map_location=device) 
@@ -57,13 +57,11 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None, s
                 uttr_total = np.empty(shape=(0, Config.n_mels)) #used to concat sub-spectrograms (2-sec parts)
                 
                 for sub_utterance in src_speaker["utterances"][utterance_i]: #iterate through sub-utterances (due to 2-sec limit spects. are split up if > 2 sec)
-                    # utterance = src_speaker["utterances"][utterance_i] 
-                    #x_org = sbmt_i[2]
+         
                     x_org, len_pad = pad_seq(sub_utterance)
                     uttr_org = torch.from_numpy(x_org[np.newaxis, :, :]).to(device)
                     print(f"Org shape of speaker {speaker_j} - utterance {utterance_i}: first:{sub_utterance.shape}, after padding: {uttr_org.shape}")
-                    # if (uttr_org.shape[1] == 0):
-                    #     continue 
+                
                     trg_speaker = metadata["target"][speaker_j]
                     emb_trg = torch.from_numpy(trg_speaker["emb"][np.newaxis, :]).to(device)
                     
@@ -77,11 +75,6 @@ def inference(output_dir, device, model_path, input_dir=None, input_data=None, s
 
                     uttr_total = np.concatenate((uttr_total, uttr_trg), axis=0) #append the split-spectrograms to create new one
                     
-                    # import matplotlib.pyplot as plt
-                    # fig, ax = plt.subplots(2)
-                    # ax[0].imshow(np.swapaxes(uttr_trg, 0, 1))
-                    # ax[1].imshow(np.swapaxes(uttr_total, 0, 1))
-                    # plt.show()
                 spect_vc.append( ('{}x{}'.format(utterance_i, speaker_j), uttr_total))
 
 
@@ -107,7 +100,7 @@ def output_to_wav(output_data, vocoder, output_dir, sample_rate):
             c = spect[1]
             
             waveform = vocoder.synthesize(c)
-            log.info(f"Writing inferred audio to: output_dir/{name}.wav")
+            log.info(f"Writing inferred audio to: {output_dir}/{name}.wav")
             sf.write(os.path.join(output_dir, name + ".wav"), waveform, sample_rate)
   
   
@@ -126,21 +119,14 @@ if __name__ == "__main__":
                         help="What vocoder to use")
     parser.add_argument("--force_preprocess", action="store_true",
                         help="Whether to force preprocessing or not")
-    # parser.add_argument("--spect_split", action="store_true",
-    #                     help="Whether to split spects into ~2s parts before processing by AutoVC")
     parser.add_argument('--len_crop', type=int, default=128, help='dataloader output sequence length, split on this amount')
     parser.add_argument("--spectrogram_type", type=str, choices=["standard", "melgan"], default="standard",
                             help="What converter to use, use 'melgan' to convert wavs to 24khz fft'd spectrograms used in the parallel melgan implementation")
     args = parser.parse_args()
 
-    target_speaker = args.source if args.source is not None else "p226"
-    source_speaker = args.target if args.target is not None else "Wouter"
+    target_speaker = args.target if args.target is not None else "Wouter"
+    source_speaker = args.source if args.source is not None else "p226"
     source_list = args.source_wav if args.source_wav is not None else ["3", "4", "5", "6", "7"]
-    # source_speaker = args.target if args.target is not None else "Wouter"
-    # source_list = args.source_wav if args.source_wav is not None else ["1"]
-    # Config.num_ut
-    #python convert.py --spectrogram_type=melgan --model_path=./checkpoints/20210503_melgan_autovc_580000
-    #python convert.py --spectrogram_type=melgan --model_path=./checkpoints/20210503_melgan_autovc_580000.ckpt --vocoder=melgan
 
 
     # directories
@@ -181,15 +167,19 @@ if __name__ == "__main__":
         vocoder = MelGan(device)
         output_file_dir = os.path.join(output_file_dir, "melgan")
 
+    sr = 16000
     if spectrogram_type == "standard":
         converter = Converter(device)
     elif spectrogram_type == "melgan":
+        
+        sr = 24000
         converter = MelganConverter(device, Config.dir_paths["melgan_config_path"], Config.dir_paths["melgan_stats_path"])
 
     skip = not args.force_preprocess
     input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=skip, len_crop=args.len_crop) #split_spects=split)
 
-    output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_lencrop{args.len_crop}_sources_{str([ str(i)+'_' for i in source_list])}", len_crop=args.len_crop)
+    output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_lencrop{args.len_crop}_sources_{str([ str(i)+'_' for i in source_list])}")
 
-    output_to_wav(output_data, vocoder, output_file_dir, Config.audio_sr)
+    
+    output_to_wav(output_data, vocoder, output_file_dir, sr)
 
