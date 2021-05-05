@@ -34,8 +34,6 @@ class Config:
         "speaker_encoder" : "3000000-BL.ckpt",
         "autovc" : "autovc.ckpt",
         "wavenet" : "checkpoint_step001000000_ema.pth"
-        # "vocoder" : "lj_checkpoint_step000320000_ema.pth"
-        # "vocoder" : "cmu_arctic_checkpoint_step000740000_ema.pth"
     }
     
     autovc_arch = {

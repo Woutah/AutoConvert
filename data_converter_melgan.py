@@ -222,7 +222,6 @@ class MelganConverter(Converter):
         """
         log.info("Calling wav_to_convert_input from melgan converter")
         spec_dir_autovc = os.path.join(Config.dir_paths["spectrograms"], "autovc") # Where to save generated spects #TODO: make sure this folder exists? 
-        # spec_dir_encoder = Config.dir_paths["melgan_spectrograms"]
         spec_dir_melgan = os.path.join(Config.dir_paths["spectrograms"], "melgan") #Save melgan-spectrograms in output_dir, as these will be used for training 
         
         if not os.path.exists(output_dir):
