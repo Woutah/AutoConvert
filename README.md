@@ -2,7 +2,7 @@
 
 This repository contains code for the Seminar Audio Processing and Indexing 2021 final project at Leiden University. As a part of this project, we investigate voice style transfer systems. We aim to create an easy-to-use conversion program utilising the [AutoVC](https://github.com/auspicious3000/autovc) voice conversion model.
 
-Some audio samples are posted [here](https://woutah.github.io/API/).
+Some audio samples are posted [here](https://woutah.github.io/AutoConvert/).
 
 ## Interface
 We implemented an easy-to-use tool which can be used to generate audio  samples on-demand by inputting either `.wav`-files, or by recording these samples directly via a microphone.
