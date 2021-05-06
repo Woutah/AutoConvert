@@ -6,13 +6,12 @@ Audio samples will be posted [here](https://woutah.github.io/API/)
 
 
 ## Interface
-
 We implemented an easy-to-use tool which can be used to generate audio  samples on-demand by inputting either `.wav`-files, or by recording these samples directly via a microphone.
 
 The tool can be started by running
 
 ```
-python --model_path ./path/to/melgan.ckpt --target_embedding_path ./path/to/target_emb.npy --source_embedding_path ./path/to/source_emb.npy
+python record_convert.py --model_path ./path/to/melgan.ckpt --target_embedding_path ./path/to/target_emb.npy --source_embedding_path ./path/to/source_emb.npy
 ```
 
 Where:
@@ -34,6 +33,22 @@ A typical conversion process consists of:
 - Playing it
 
 The results can be saved using the `save` buttons, the target embedding can be loaded dynamically by using `Load Target`, or by generating a random embedding, using the `Randomize Target Embedding` button.
+
+## Live Conversion
+
+The live-converter can be started using:
+
+```
+python live_converter.py --model_path ./path/to/melgan.ckpt --target_embedding_path ./path/to/target_emb.npy --source_embedding_path ./path/to/source_emb.npy
+```
+The arguments are the same as for the aforementation `interface` script
+
+
+This script first creates a wav-buffer, which is dynamically interpreted to a target-spectrogram-buffer, this target-spectrogram-buffer is then converted back to an audio sample which is dynamically played back. 
+
+Because both librosa and the vocoders operate better on larger sample-sizes, a buffer is built up before live-conversion is attempted, this is why there is a delay of a couple of seconds before the output can be heard. 
+
+Conversion is real-time when ran on a Ryzen 3800x CPU. 
 
 ## Installation
 
