@@ -54,11 +54,30 @@ class VoiceRecoder(QtWidgets.QMainWindow):
         self.layout = QtWidgets.QVBoxLayout()
 
         #============================Buttons=================================
-        self.btn_record = QtWidgets.QPushButton(text="Record")
-        self.btn_record.clicked.connect(self.record)
-        self.layout.addWidget(self.btn_record)
 
         
+        #=========Recording buttons===========
+        self.recording_btn_layout= QtWidgets.QHBoxLayout()
+        self.btn_record = QtWidgets.QPushButton(text="Record")
+        self.btn_record.clicked.connect(self.record)
+        self.recording_btn_layout.addWidget(self.btn_record, 10)
+        
+        self.btn_play_recording = QtWidgets.QPushButton(text="Play")
+        self.btn_play_recording.clicked.connect(self.play_recorded_wav)
+        self.recording_btn_layout.addWidget(self.btn_play_recording, 1)
+
+        self.btn_load_recording = QtWidgets.QPushButton(text="Load")
+        self.btn_load_recording.clicked.connect(self.load_wav_dialog)
+        self.recording_btn_layout.addWidget(self.btn_load_recording, 1)
+        self.btn_save_recording = QtWidgets.QPushButton(text="Save")
+        self.btn_save_recording.clicked.connect(self.save_result_wav)
+        self.recording_btn_layout.addWidget(self.btn_save_recording, 1)
+
+
+        self.layout.addLayout(self.recording_btn_layout)
+
+
+        #======Other==================
         self.btn_convert = QtWidgets.QPushButton(text="Convert")
         self.btn_convert.clicked.connect(self.convert)
         self.layout.addWidget(self.btn_convert)
@@ -76,6 +95,10 @@ class VoiceRecoder(QtWidgets.QMainWindow):
         self.btn_set_random_target = QtWidgets.QPushButton(text="Randomize Target Embedding")
         self.btn_set_random_target.clicked.connect(self.randomize_target)
         self.layout.addWidget(self.btn_set_random_target)
+        
+        self.btn_save_wav = QtWidgets.QPushButton(text="Save Wav")
+        self.btn_save_wav.clicked.connect(self.save_result_wav)
+        self.layout.addWidget(self.btn_save_wav)
 
         self.central_widget.setLayout(self.layout)
         # self.head_layout.addLayout(self.layout)
@@ -128,22 +151,60 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 
         self.recorded_wav = None
         if default_wav_path is not None:
-            log.info(f"Trying to preload wav at {default_wav_path}")
-            try:
-                wav, sr = sf.read(default_wav_path)
-                if sr != 24000: #Resampling
-                    # log.inf("Resampling ")
-                    wav = librosa.resample(wav, sr, 24000)
-                self.recorded_wav = np.array(wav, dtype=np.float32)
-            except Exception as err:
-                log.error(f"Error when loading {default_wav_path} - {err} - defaulting to empty recorded wav")
-                self.recorded_wav = None
+            self.load_wav(default_wav_path)
             # print(self.recorded_wav)
         
         # self.create_result_wav()
 
+    def play_recorded_wav(self):
+        if self.recorded_wav is not None:
+            utility.play_wav_from_npy(self.recorded_wav)
+        else:
+            log.error("No recorded wav, can't play")
 
 
+    def load_wav(self, wav_path):
+        if wav_path is None:
+            log.error("No path given, could not load wav")
+            return
+        log.info(f"Trying to load wav at {wav_path}")
+        wav = None
+        try:
+            wav, sr = sf.read(wav_path)
+            if sr != self.sampling_rate: #Resampling
+                log.info("Unmatching sampling rate, now resampling...")
+                wav = librosa.resample(wav, sr, self.sampling_rate)
+            wav = np.array(wav, dtype=np.float32)
+        except Exception as err:
+            log.error(f"Error when loading {wav_path} - {err} - defaulting to original recorded wav")
+            return
+            # self.recorded_wav = None
+        self.recorded_wav = wav 
+
+    def load_wav_dialog(self):
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', 
+                ".","Recording (*.wav)")
+        if fname is not None:
+            self.load_wav(fname[0])
+
+    def save_wav_dialog(self, wav, sampling_rate):
+        if wav is None:
+            log.error(f"Could not save wav, wav is: {wav}")
+            return
+        
+
+        savename = QtWidgets.QFileDialog.getSaveFileName(self, "Save file", "", ".wav")
+        log.info(f"Trying to save wav as {savename}")
+        try:
+            sf.write(savename[0] + ".wav", wav, sampling_rate) #Try to save it
+        except Exception as err:
+            log.info(f"Could not save wav using {savename} - {err} - skipping...")
+            return
+        
+        log.info(f"Saved wav as {savename[0]}")
+
+    def save_result_wav(self):
+        self.save_wav_dialog(self.result_wav, self.sampling_rate)
 
     def randomize_target(self):
         # log.info(f"Randomized target embedding to {self.target_embedding}")
@@ -253,7 +314,8 @@ if __name__ == "__main__":
     parser.add_argument("--source_embedding_path", type=str, default="./spectrograms/melgan/Wouter/Wouter_emb.npy",
                         help="What embedding to use, path to target embedding .npy file with shape: [256], source embedding is calculated dynamically")
 
-    parser.add_argument("--default_wav_path", type=str, default="./input/Wouter/6.wav")
+    # parser.add_argument("--default_wav_path", type=str, default="./input/Wouter/6.wav")
+    parser.add_argument("--default_wav_path", type=str, default="./input/this_is_a_test_sentence.wav")
 
     # parser.add_argument("--spectrogram_type", type=str, choices=["standard", "melgan"], default="standard",
     #                         help="What converter to use, use 'melgan' to convert wavs to 24khz fft'd spectrograms used in the parallel melgan implementation")

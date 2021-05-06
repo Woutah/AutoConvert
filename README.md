@@ -3,6 +3,38 @@ This repository contains code for the Seminar Audio Processing and Indexing 2021
 
 Audio samples will be posted [here](https://woutah.github.io/API/)
 
+
+
+## Interface
+
+We implemented an easy-to-use tool which can be used to generate audio  samples on-demand by inputting either `.wav`-files, or by recording these samples directly via a microphone.
+
+The tool can be started by running
+
+```
+python --model_path ./path/to/melgan.ckpt --target_embedding_path ./path/to/target_emb.npy --source_embedding_path ./path/to/source_emb.npy
+```
+
+Where:
+
+``model_path`` - The location of the trained autoVC model-checkpoint (trained on Melgan spectrograms)
+
+``target_embedding_path`` - The (start) location of `target_embedding.npy`, target embedding can be changed dynamically
+
+``source_embedding_path`` - The location of `source_embedding.npy`, this should be known beforehand
+
+Running the xample results in the following menu:
+
+<img src="./etc/gui_example.png" width="400" />
+
+A typical conversion process consists of:
+
+- Recording an audio sample 
+- Converting it ( source .wav &rarr; source spect &rarr; target spect &rarr; Vocoder &rarr; target .wav )
+- Playing it
+
+The results can be saved using the `save` buttons, the target embedding can be loaded dynamically by using `Load Target`, or by generating a random embedding, using the `Randomize Target Embedding` button.
+
 ## Installation
 
 Install dependencies using:
@@ -103,5 +135,7 @@ train.pkl
 
 - [x] Implement easy conversion using audio files
 - [x] Split audio files into ~2 second parts for processing by AutoVC
-    - [ ] Investigate audio scramble 
-- [ ] Fix slow [WaveNet](https://github.com/r9y9/wavenet_vocoder) vocoder
+    - [x] Investigate audio scramble 
+- [x] Fix slow [WaveNet](https://github.com/r9y9/wavenet_vocoder) vocoder
+- [x] Train on larger sammples
+- [x] Train with more speakers
