@@ -23,7 +23,7 @@ Where:
 
 ``source_embedding_path`` - The location of `source_embedding.npy`, this should be known beforehand
 
-Running the xample results in the following menu:
+Running the sample results in the following menu:
 
 <img src="./etc/gui_example.png" width="400" />
 
@@ -62,6 +62,12 @@ Run the following command to convert a specific source audio file to sound like 
 ```
 python convert.py --source speaker1 --target speaker2 --source_wav audio1
 ```
+
+Using the `--vocoder {"griffin", "wavenet", "melgan"}` tag, the vocoder of the framework can be adapted to any of the following:
+
+* **WaveNet:** The default WaveNet vocoder used by the AutoVC authors. This vocoder achieves good quality with a high inference penalty.
+* **Griffin-Lim:** A fast vocoder with a loss of audio quality.
+* **MelGAN:** A fast vocoder with decent audio quality. The pretrained model on VCTK is downloadable [here](https://drive.google.com/drive/folders/17EkB4hSKUEDTYEne-dNHtJT724hdivn4)
 
 ### Training
 To train the autovc model, use the following command:
@@ -137,5 +143,5 @@ train.pkl
 - [x] Split audio files into ~2 second parts for processing by AutoVC
     - [x] Investigate audio scramble 
 - [x] Fix slow [WaveNet](https://github.com/r9y9/wavenet_vocoder) vocoder
-- [x] Train on larger sammples
+- [x] Train on larger samples
 - [x] Train with more speakers
