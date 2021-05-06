@@ -1,8 +1,8 @@
 # User defined
 .vscode
-networks
 autovc/results
 input
+networks
 spectrograms
 metadata
 output

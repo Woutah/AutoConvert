@@ -1,9 +1,8 @@
-# API
+# AutoConvert
+
 This repository contains code for the Seminar Audio Processing and Indexing 2021 final project at Leiden University. As a part of this project, we investigate voice style transfer systems. We aim to create an easy-to-use conversion program utilising the [AutoVC](https://github.com/auspicious3000/autovc) voice conversion model.
 
-Audio samples will be posted [here](https://woutah.github.io/API/)
-
-
+Some audio samples are posted [here](https://woutah.github.io/API/).
 
 ## Interface
 We implemented an easy-to-use tool which can be used to generate audio  samples on-demand by inputting either `.wav`-files, or by recording these samples directly via a microphone.
@@ -82,7 +81,7 @@ Using the `--vocoder {"griffin", "wavenet", "melgan"}` tag, the vocoder of the f
 
 * **WaveNet:** The default WaveNet vocoder used by the AutoVC authors. This vocoder achieves good quality with a high inference penalty.
 * **Griffin-Lim:** A fast vocoder with a loss of audio quality.
-* **MelGAN:** A fast vocoder with decent audio quality. The pretrained model on VCTK is downloadable [here](https://drive.google.com/drive/folders/17EkB4hSKUEDTYEne-dNHtJT724hdivn4)
+* **MelGAN:** A fast vocoder with decent audio quality. The pretrained model on VCTK is downloadable [here](https://drive.google.com/drive/folders/17EkB4hSKUEDTYEne-dNHtJT724hdivn4). As this vocoder uses a different Mel-spectrogram format, use the retrained AutoVC model downloadable [here](https://drive.google.com/file/d/1VmBJ_vfYhhs0DelSLSAfLkh84MAAhor2/view?usp=sharing), by using the `--model_path <path>` flag.
 
 ### Training
 To train the autovc model, use the following command:
