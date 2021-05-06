@@ -44,7 +44,7 @@ def overwrite_to_file(filename, content):
 
 
 
-# import pyaudio
+import pyaudio
 
 def play_wav_from_npy(wav : np.ndarray, sample_rate = 24000):
     

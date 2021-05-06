@@ -122,7 +122,7 @@ class LiveConverter():
         # print(f"{type(in_data)}")
         if type(in_data) == bytes:
             # converted = np.frombuffer(in_data, 'Float32')
-            with self.lock:
+            with self.lock: #TODO: is this necceasry?
                 converted = np.frombuffer(in_data, dtype="float32")
                 self.chunk_queue.append(converted)
         else:
@@ -138,8 +138,8 @@ class LiveConverter():
         # SPECT_BUFFER = 2
 
         while True:
+            log.info(f"Chunk queue size: {len(self.chunk_queue)} - Processed spect queue size: {len(self.processed_spect_queue)}, processed wave queue size: {len(self.processed_wav_queue)}")
             while(len(self.processed_spect_queue)) > SPECT_CROP_LEN: # //SPECT_HOPS_PER_LEN:
-                log.info(f"Chunk queue size: {len(self.chunk_queue)} - Processed spect queue size: {len(self.processed_spect_queue)}, processed wave queue size: {len(self.processed_wav_queue)}")
 
                 # log.info(f"Processed spect queue size: {len(self.processed_spect_queue)}")
                 # data = self.processed_spect_queue.peek(SPECT_CROP_LEN):
@@ -589,9 +589,9 @@ if __name__ == "__main__":
                         help="Path to trained AutoVC model")
     # parser.add_argument("--vocoder", type=str, default="griffin", choices=["griffin", "wavenet", "melgan"],
     #                     help="What vocoder to use")
-    parser.add_argument("--target_embedding_path", type=str, default="./spectrograms/p226/p226_emb.npy",
+    parser.add_argument("--target_embedding_path", type=str, default="./spectrograms/melgan/p226/p226_emb.npy",
                         help="What embedding to use, path to target embedding .npy file with shape: [256], source embedding is calculated dynamically")
-    parser.add_argument("--source_embedding_path", type=str, default="./spectrograms/Wouter/Wouter_emb.npy",
+    parser.add_argument("--source_embedding_path", type=str, default="./spectrograms/melgan/Wouter/Wouter_emb.npy",
                         help="What embedding to use, path to target embedding .npy file with shape: [256], source embedding is calculated dynamically")
     # parser.add_argument("--spectrogram_type", type=str, choices=["standard", "melgan"], default="standard",
     #                         help="What converter to use, use 'melgan' to convert wavs to 24khz fft'd spectrograms used in the parallel melgan implementation")

@@ -124,11 +124,10 @@ if __name__ == "__main__":
                             help="What converter to use, use 'melgan' to convert wavs to 24khz fft'd spectrograms used in the parallel melgan implementation")
     args = parser.parse_args()
 
-    target_speaker = args.target if args.target is not None else "Wouter"
-    source_speaker = args.source if args.source is not None else "p226"
+    target_speaker = args.target if args.target is not None else "p226"
+    source_speaker = args.source if args.source is not None else "Wouter"
     source_list = args.source_wav if args.source_wav is not None else ["3", "4", "5", "6", "7"]
-#python convert.py --spectrogram_type=melgan --model_path=./checkpoints/20210504_melgan_lencrop514_autovc_1229998.ckpt --vocoder=melgan --len_crop=0 --target Wouter --source p226 --source_wav p226_003.wav p226_005.wav p226_008.wav p226_011.wav p226_016.wav p226_019.wav p226_021.wav p226_022.wav p226_023.wav
-
+#python convert.py --spectrogram_type=melgan --model_path=./checkpoints/20210504_melgan_lencrop514_autovc_1229998.ckpt --vocoder=melgan --len_crop=0 --target Wouter --source p226 --source_wav p226_003 p226_005 p226_008 p226_011 p226_016 p226_019 p226_021 p226_022 p226_023
     # directories
     input_dir = Config.dir_paths["input"]
     converted_data_dir = Config.dir_paths["metadata"]
