@@ -574,9 +574,9 @@ if __name__ == "__main__":
 						help="Path to trained AutoVC model")
 	# parser.add_argument("--vocoder", type=str, default="griffin", choices=["griffin", "wavenet", "melgan"],
 	#                     help="What vocoder to use")
-	parser.add_argument("--target_embedding_path", type=str, default="./spectrograms/melgan/p226/p226_emb.npy",
+	parser.add_argument("--target_embedding_path", type=str, default="./embeddings/p226_emb.npy",
 						help="What embedding to use, path to target embedding .npy file with shape: [256], source embedding is calculated dynamically")
-	parser.add_argument("--source_embedding_path", type=str, default="./spectrograms/melgan/Wouter/Wouter_emb.npy",
+	parser.add_argument("--source_embedding_path", type=str, default="./embeddings/Wouter_emb.npy",
 						help="What embedding to use, path to target embedding .npy file with shape: [256], source embedding is calculated dynamically")
 
 	# parser.add_argument("--default_wav_path", type=str, default="./input/Wouter/6.wav")

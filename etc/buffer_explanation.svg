@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="buffer_explanation.svg"
+   id="svg409"
+   width="683.99194pt"
+   viewBox="0 0 683.99194 116.85623"
+   version="1.1"
+   height="116.85623pt">
+  <sodipodi:namedview
+     inkscape:current-layer="svg409"
+     inkscape:window-maximized="1"
+     inkscape:window-y="-8"
+     inkscape:window-x="-8"
+     inkscape:cy="50.412676"
+     inkscape:cx="448.8321"
+     inkscape:zoom="1.1282481"
+     showgrid="false"
+     id="namedview411"
+     inkscape:window-height="1137"
+     inkscape:window-width="1920"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff" />
+  <metadata
+     id="metadata2">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:date>2021-05-03T10:36:04.235860</dc:date>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Matplotlib v3.4.1, https://matplotlib.org/</dc:title>
+          </cc:Agent>
+        </dc:creator>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs6">
+    <rect
+       id="rect2107"
+       height="214.71339"
+       width="801.6853"
+       y="165.52209"
+       x="182.80553" />
+    <inkscape:path-effect
+       only_selected="false"
+       apply_with_weight="true"
+       apply_no_weight="true"
+       helper_size="0"
+       steps="2"
+       weight="33.333333"
+       lpeversion="1"
+       is_visible="true"
+       id="path-effect2067"
+       effect="bspline" />
+    <marker
+       inkscape:stockid="TriangleOutM"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker1952"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path1950"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="scale(0.4)" />
+    </marker>
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect1942"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <marker
+       inkscape:collect="always"
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="TriangleOutM"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="TriangleOutM">
+      <path
+         transform="scale(0.4)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path1725" />
+    </marker>
+    <inkscape:path-effect
+       only_selected="false"
+       apply_with_weight="true"
+       apply_no_weight="true"
+       helper_size="0"
+       steps="2"
+       weight="33.333333"
+       lpeversion="1"
+       is_visible="true"
+       id="path-effect1578"
+       effect="bspline" />
+    <style
+       id="style4"
+       type="text/css">*{stroke-linecap:butt;stroke-linejoin:round;}</style>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker1952-7"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="TriangleOutM">
+      <path
+         transform="scale(0.4)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path1950-1" />
+    </marker>
+  </defs>
+  <defs
+     id="defs407">
+    <clipPath
+       id="pd1e280ef01">
+      <rect
+         id="rect404"
+         y="94.608002"
+         x="174.33"
+         width="1080.8459"
+         height="607.06799" />
+    </clipPath>
+  </defs>
+  <rect
+     style="opacity:1;fill:#c5c5c5;fill-opacity:1;stroke:#009c00;stroke-width:0;stroke-linecap:butt;stroke-linejoin:round;stroke-opacity:1"
+     id="rect1444"
+     width="125.99797"
+     height="116.85616"
+     x="5e-07"
+     y="6.1535153e-05" />
+  <text
+     xml:space="preserve"
+     style="font-size:12px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
+     x="64.671814"
+     y="54.889069"
+     id="text1456"><tspan
+       sodipodi:role="line"
+       id="tspan1454"
+       x="64.671814"
+       y="54.889069"
+       style="text-align:center;text-anchor:middle;stroke-width:0.75">Audio Recording </tspan><tspan
+       sodipodi:role="line"
+       x="64.671814"
+       y="69.889053"
+       style="text-align:center;text-anchor:middle;stroke-width:0.75"
+       id="tspan1458">Queue</tspan></text>
+  <rect
+     y="4.6276367e-05"
+     x="185.99799"
+     height="116.85616"
+     width="125.99797"
+     id="rect1444-6"
+     style="opacity:1;fill:#c5c5c5;fill-opacity:1;stroke:#009c00;stroke-width:0;stroke-linecap:butt;stroke-linejoin:round;stroke-opacity:1" />
+  <text
+     id="text1456-4"
+     y="54.889053"
+     x="250.6698"
+     style="font-size:12px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
+     xml:space="preserve"><tspan
+       style="text-align:center;text-anchor:middle;stroke-width:0.75"
+       y="54.889053"
+       x="250.6698"
+       id="tspan1454-5"
+       sodipodi:role="line">Input Spectrogram </tspan><tspan
+       id="tspan1458-4"
+       style="text-align:center;text-anchor:middle;stroke-width:0.75"
+       y="69.889053"
+       x="250.6698"
+       sodipodi:role="line">Queue</tspan></text>
+  <rect
+     style="opacity:1;fill:#c5c5c5;fill-opacity:1;stroke:#009c00;stroke-width:0;stroke-linecap:butt;stroke-linejoin:round;stroke-opacity:1"
+     id="rect1444-6-6"
+     width="125.99797"
+     height="116.85616"
+     x="371.99597"
+     y="1.5758789e-05" />
+  <text
+     xml:space="preserve"
+     style="font-size:12px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
+     x="436.66779"
+     y="54.889023"
+     id="text1456-4-3"><tspan
+       sodipodi:role="line"
+       id="tspan1454-5-1"
+       x="436.66779"
+       y="54.889023"
+       style="text-align:center;text-anchor:middle;stroke-width:0.75">Output Spectrogram</tspan><tspan
+       sodipodi:role="line"
+       x="436.66779"
+       y="69.889023"
+       style="text-align:center;text-anchor:middle;stroke-width:0.75"
+       id="tspan1458-4-0">Queue</tspan></text>
+  <path
+     sodipodi:nodetypes="cc"
+     inkscape:original-d="m 126.65553,58.170279 c 17.54994,7.5e-4 35.20086,7.5e-4 52.80018,0"
+     inkscape:path-effect="#path-effect1578"
+     id="path1576"
+     d="m 126.65553,58.170279 c 17.54994,0 35.20086,0 52.80018,0"
+     style="fill:none;stroke:#000000;stroke-width:2.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleOutM)" />
+  <text
+     id="text1924"
+     y="71.299026"
+     x="155.74225"
+     style="font-size:10px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.75"
+     xml:space="preserve"><tspan
+       style="font-size:10px;text-align:center;text-anchor:middle;stroke-width:0.75"
+       y="71.299026"
+       x="155.74225"
+       id="tspan1922"
+       sodipodi:role="line">Spectrogram</tspan><tspan
+       id="tspan1926"
+       style="font-size:10px;text-align:center;text-anchor:middle;stroke-width:0.75"
+       y="83.799026"
+       x="155.74225"
+       sodipodi:role="line">Conversion</tspan></text>
+  <path
+     style="fill:none;stroke:#000000;stroke-width:2.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker1952)"
+     d="m 312.65553,58.170279 c 17.54994,0 35.20086,0 52.80018,0"
+     id="path1940"
+     inkscape:path-effect="#path-effect1942"
+     inkscape:original-d="m 312.65553,58.170279 c 17.54994,7.5e-4 35.20086,7.5e-4 52.80018,0"
+     sodipodi:nodetypes="cc" />
+  <text
+     xml:space="preserve"
+     style="font-size:12px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.75"
+     x="341.74225"
+     y="71.299026"
+     id="text1948"><tspan
+       sodipodi:role="line"
+       x="341.74225"
+       y="71.299026"
+       style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:0.75"
+       id="tspan1946">AutoVC</tspan></text>
+  <rect
+     y="5e-07"
+     x="557.99396"
+     height="116.85616"
+     width="125.99797"
+     id="rect1444-6-6-1"
+     style="opacity:1;fill:#c5c5c5;fill-opacity:1;stroke:#009c00;stroke-width:0;stroke-linecap:butt;stroke-linejoin:round;stroke-opacity:1" />
+  <text
+     id="text1456-4-3-2"
+     y="54.889008"
+     x="622.66577"
+     style="font-size:12px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
+     xml:space="preserve"><tspan
+       style="text-align:center;text-anchor:middle;stroke-width:0.75"
+       y="54.889008"
+       x="622.66577"
+       id="tspan1454-5-1-3"
+       sodipodi:role="line">Audio Output </tspan><tspan
+       id="tspan1458-4-0-4"
+       style="text-align:center;text-anchor:middle;stroke-width:0.75"
+       y="69.888992"
+       x="622.66577"
+       sodipodi:role="line">Queue</tspan></text>
+  <path
+     sodipodi:nodetypes="cc"
+     inkscape:original-d="m 498.65352,58.170269 c 17.54994,7.5e-4 35.20086,7.5e-4 52.80018,0"
+     inkscape:path-effect="#path-effect2067"
+     id="path1940-9"
+     d="m 498.65352,58.170269 c 17.54994,0 35.20086,0 52.80018,0"
+     style="fill:none;stroke:#000000;stroke-width:2.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker1952-7)" />
+  <text
+     id="text1948-6"
+     y="71.299026"
+     x="527.74023"
+     style="font-size:12px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
+     xml:space="preserve"><tspan
+       id="tspan1946-5"
+       style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:0.75"
+       y="71.299026"
+       x="527.74023"
+       sodipodi:role="line">Vocoder</tspan></text>
+  <text
+     transform="translate(-260.39362,-192.1071)"
+     style="font-size:12px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;white-space:pre;shape-inside:url(#rect2107);"
+     id="text2105"
+     xml:space="preserve" />
+  <text
+     id="text2113"
+     y="90.391373"
+     x="323.17017"
+     style="font-size:12px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.75"
+     xml:space="preserve"><tspan
+       style="stroke-width:0.75"
+       y="90.391373"
+       x="323.17017"
+       id="tspan2111"
+       sodipodi:role="line" /></text>
+</svg>
