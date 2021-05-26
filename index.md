@@ -8,15 +8,25 @@ The table below contains conversion samples between speakers from the VCTK datas
 * **WaveNet:** A [WaveNet](https://github.com/r9y9/wavenet_vocoder) vocoder pretrained on VCTK by the AutoVC authors.
 * **MelGAN:** A Multi-band [MelGAN](https://github.com/kan-bayashi/ParallelWaveGAN) vocoder pretrained on VCTK
 
+<style>
+	.alignright {
+		text-align: right;
+		float:right;
+	}
+</style>
 
 
-| Source Speaker | Target Speaker | Results |  |
-|----|----|----|----|
-| p225 (Female) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio> | p225 (Female) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio> | AutoVC + WaveNet (Baseline) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_wavenet.wav'></audio> AutoVC + Griffin <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_griffin.wav'></audio> <br> AutoVC + MelGAN <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_melgan.wav'></audio> <br> New AutoVC + MelGAN <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_new_melgan.wav'></audio> |
-| | p226 (Male) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio> | AutoVC + WaveNet <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp226_old_wavenet.wav'></audio> <br> New AutoVC + MelGAN <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp226_new_melgan.wav'></audio> |
-| | Wouter (Male) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_Wouter_this_is_a_testsentence.wav'></audio> |AutoVC + WaveNet <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xWouter_wavenet.wav'></audio> AutoVC + MelGAN <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xWouter_new_melgan.wav'></audio>|
+| Source Speaker | Target Speaker | Results |
+|----|----|----|
+| p225 (Female) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio> | p225 (Female) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio> | AutoVC + WaveNet (Baseline)<span class='alignright'>(320.76s)</span> <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_wavenet.wav'></audio> AutoVC + Griffin <span class='alignright'>(1.19s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_griffin.wav'></audio> <br> AutoVC + MelGAN <span class='alignright'>(1.07s)</span><br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_melgan.wav'></audio> <br> New AutoVC + MelGAN <span class='alignright'>(0.80s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_new_melgan.wav'></audio> |
+| | p226 (Male) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio> | AutoVC + WaveNet <span class='alignright'>(306.57s)</span> <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp226_old_wavenet.wav'></audio> <br> New AutoVC + MelGAN <span class='alignright'>(1.08s)</span> <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp226_new_melgan.wav'></audio> |
+| | Wouter (Male) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio> |AutoVC + WaveNet  <span class='alignright'>(313.75s)</span> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xWouter_wavenet.wav'></audio> AutoVC + MelGAN  <span class='alignright'>(1.31s)</span> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xWouter_new_melgan.wav'></audio>|
 |Long Samples|||
 ||||
-|p226 (Male)<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio>| p225 (Female) ||
-||Wouter (Male) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio>| AutoVC + WaveNet <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_003xWouter_wavenet.wav'></audio> New AutoVC + MelGAN <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xWouter_new_melgan.wav'></audio>|
+|p226 (Male)<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio>| p225 (Female) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio>|AutoVC + WaveNet <span class='alignright'>(1039.64s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xp225_wavenet.wav'></audio> New AutoVC + MelGAN <span class='alignright'>(2.10s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xp225_new_melgan.wav'>|
+||Wouter (Male) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio>| AutoVC + WaveNet <span class='alignright'>(905.23s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_003xWouter_wavenet.wav'></audio> New AutoVC + MelGAN <span class='alignright'>(1.92s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xWouter_new_melgan.wav'></audio>|
 ||225 (Female)|
+
+
+
+<span class='alignright'>(s)</span> 
