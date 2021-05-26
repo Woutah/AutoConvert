@@ -8,6 +8,15 @@ The table below contains conversion samples between speakers from the VCTK datas
 * **WaveNet:** A [WaveNet](https://github.com/r9y9/wavenet_vocoder) vocoder pretrained on VCTK by the AutoVC authors.
 * **MelGAN:** A Multi-band [MelGAN](https://github.com/kan-bayashi/ParallelWaveGAN) vocoder pretrained on VCTK
 
+\subsection{AutoVC Configurations} \label{sec:confs}
+To improve both the quality of generated samples, and the conversion speed, we make several alterations to the base AutoVC framework. We define the following models:
+
+\begin{enumerate}
+    \item \textbf{AutoVC-WaveNet:} The base AutoVC model as proposed by the authors of \cite{paper:autovc} using the WaveNet vocoder\footnote{AutoVC + WaveNet pretrained models downloadable at \url{https://github.com/auspicious3000/autovc}}. This convolutional model managed to convert high quality samples in previous work.
+    \item \textbf{AutoVC-Griffin:} The AutoVC framework using a Griffin-Lim vocoder \cite{paper:griffin}. This algorithm aims to approximate magnitude spectrogram inversion by using alternating forward and inverse Short-Time Fourier Transform (STFT) operations. We set the number of iterations to run to $32$.
+    \item \textbf{AutoVC-MelGAN:} The AutoVC framework using a multi-band MelGAN vocoder \cite{paper:melgan} pretrained on the VCTK corpus\footnote{MelGAN pretrained models downloadable at \url{https://github.com/kan-bayashi/ParallelWaveGAN}}. This configuration uses an AutoVC model retrained on the full VCTK dataset. This was done to ensure the AutoVC model mel-spectrogram output fit the format required for the MelGAN vocoder.
+
+
 | Source Speaker | Target Speaker | Results |
 |---|---|---|
 | p225 (Female) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio> | p225 (Female) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio> | AutoVC + Griffin <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_griffin.wav'></audio> <br> AutoVC + WaveNet <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_wavenet.wav'></audio> <br> AutoVC + MelGAN <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_melgan.wav'></audio> <br> New AutoVC + MelGAN <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_new_melgan.wav'></audio> |
