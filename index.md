@@ -31,6 +31,7 @@ The **New AutoVC + MelGAN** model was retrained on the full VCTK dataset, using 
 We encourage readers to try the tool provided in the github repository to generate their own samples. 
 
 ## Short Samples
+
 | Source Speaker | Target Speaker | Results |
 |----|----|----|
 | p225 (Female) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio> | p225 (Female) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio> | AutoVC + WaveNet (Baseline)<span class='alignright'>(320.76s)</span> <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_wavenet.wav'></audio> AutoVC + Griffin <span class='alignright'>(1.19s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_griffin.wav'></audio> <br> AutoVC + MelGAN <span class='alignright'>(1.07s)</span><br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_old_melgan.wav'></audio> <br> New AutoVC + MelGAN <span class='alignright'>(0.80s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xp225_new_melgan.wav'></audio> |
