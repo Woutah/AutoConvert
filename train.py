@@ -9,8 +9,6 @@ from torch.backends import cudnn
 
 import json
 import torch
-from data_converter import Converter
-from data_converter_melgan import MelganConverter
 
 from config import Config
 import logging

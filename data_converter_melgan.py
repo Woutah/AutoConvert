@@ -24,12 +24,7 @@ class MelganConverter(Converter):
     def __init__(self, device, melgan_config_path, melgan_stats_path, *args, **kwargs):
         super(MelganConverter, self).__init__(device, *args, **kwargs)
         print("initializing melganconverter")
-        # self._device = device
-        # log.info(f"Using device {self._device}")
-        # if not melgan_config:
 
-        
-        # vocoder_conf = "melgan/vctk_multi_band_melgan.v2/config.yml"
         try:
             with open(melgan_config_path) as f:
                 self.melgan_config = yaml.load(f, Loader=yaml.Loader)
@@ -112,7 +107,6 @@ class MelganConverter(Converter):
             exit(0)
 
         if sample_rate != self.melgan_config["sampling_rate"]: #Resampling
-            # log.inf("Resampling ")
             wav = librosa.resample(wav, sample_rate, self.melgan_config["sampling_rate"])
             print(f"Wav file with sr {sample_rate} != {self.melgan_config['sampling_rate']}, Now resampling to {self.melgan_config['sampling_rate']}")
 
@@ -138,12 +132,9 @@ class MelganConverter(Converter):
         if self.melgan_config["format"] == "hdf5":
             scaler.mean_ = read_hdf5(self.melgan_stats_path, "mean")
             scaler.scale_ = read_hdf5(self.melgan_stats_path, "scale")
-        # elif config["format"] == "npy":
-            # scaler.mean_ = np.load(args.stats)[0]
-            # scaler.scale_ = np.load(args.stats)[1]
         else:
             raise ValueError("support only hdf5 (and normally npy - but not now) format.... cannot load in scaler mean/scale, exiting")
-            exit(0)
+         
         # from version 0.23.0, this information is needed
         scaler.n_features_in_ = scaler.mean_.shape[0]
         mel = scaler.transform(mel)

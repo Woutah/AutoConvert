@@ -11,11 +11,11 @@ import numpy as np
 import soundfile as sf
 import torch
 
+import timer
 from autovc.model_vc import Generator
 from config import Config
 from data_converter import Converter
 from data_converter_melgan import MelganConverter
-import timer
 
 logging.basicConfig(level=logging.INFO) 
 log = logging.getLogger(__name__)
@@ -144,8 +144,8 @@ if __name__ == "__main__":
 
 	target_speaker = args.target if args.target is not None else "p225"
 	source_speaker = args.source if args.source is not None else "p226"
-	source_list = args.source_wav if args.source_wav is not None else ["p226_003"]#, "4", "5", "6", "7"]
-#python convert.py --spectrogram_type=melgan --model_path=./checkpoints/20210504_melgan_lencrop514_autovc_1229998.ckpt --vocoder=melgan --len_crop=0 --target Wouter --source p226 --source_wav p226_003 p226_005 p226_008 p226_011 p226_016 p226_019 p226_021 p226_022 p226_023
+	source_list = args.source_wav if args.source_wav is not None else ["p226_003"]
+
 	# directories
 	input_dir = Config.dir_paths["input"]
 	converted_data_dir = Config.dir_paths["metadata"]
@@ -162,7 +162,6 @@ if __name__ == "__main__":
 		exit(1)
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	# device = torch.device("cpu")
 
 	if device.type == "cuda":
 		print(torch.cuda.get_device_name(0))
@@ -192,7 +191,7 @@ if __name__ == "__main__":
 		converter = MelganConverter(device, Config.dir_paths["melgan_config_path"], Config.dir_paths["melgan_stats_path"])
 
 	skip = not args.force_preprocess
-	input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=skip, len_crop=args.len_crop) #split_spects=split)
+	input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=skip, len_crop=args.len_crop)
 	wall_timer = timer.WallTimer()
 	cpu_timer = timer.CpuTimer()
 	

@@ -1,10 +1,8 @@
 
 import pyaudio
-import wave
 import logging
 import argparse
 import os
-import pickle
 from math import ceil
 
 import numpy as np
@@ -16,17 +14,16 @@ from autovc.model_bl import D_VECTOR
 from autovc.model_vc import Generator
 from config import Config
 import utility
-from data_converter import Converter
 from vocoders import MelGan
 from data_converter_melgan import MelganConverter
-import threading, queue, collections
+import threading
 import librosa
 import yaml
 import hdfdict
 import sklearn 
 import time
-from NumpyQueue import NumpyQueue, ThreadNumpyQueue
-from PyQt5 import QtCore, QtGui, QtWidgets
+from NumpyQueue import ThreadNumpyQueue
+from PyQt5 import QtWidgets
 import pyaudio
 log = logging.getLogger(__name__ )
  
@@ -127,11 +124,6 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 		self.btn_toggle_live_conversion.setStyleSheet("background-color : grey")
 		self.btn_toggle_live_conversion.clicked.connect(self.toggle_live_loop)
 		self.live_converter_layout.addWidget(self.btn_toggle_live_conversion)
-
-	
-		# self.btn_stop_live_conversion = QtWidgets.QPushButton(text="Stop")
-		# self.btn_stop_live_conversion.clicked.connect(self.stop_live_loop)
-		# self.live_converter_layout.addWidget(self.btn_stop_live_conversion)
 		
 		#====================================Set groupboxes ==================================
 
@@ -147,11 +139,6 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 
 
 		self.central_widget.setLayout(self.layout)
-		# self.head_layout.addLayout(self.layout)
-		# self.show()
-		# self.layout 
-
-
 
 		#==================Melgan properties=========================
 		#General properties
@@ -186,19 +173,16 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 		self.target_embedding = target_embedding
 		self.vocoder = vocoder
 
-
-		# self.source_embed = torch.tensor(np.zeros(256, dtype=np.float32)).to(device)
 		self.source_embedding = source_embedding
 
 		self._unprocessed_frames = 0
 		log.info("Done initializing LiveConverter")
-		# self.unprocessed_frames_counter = threading.Lock()
+
 		self.result_wav = None
 
 		self.recorded_wav = None
 		if default_wav_path is not None:
 			self.load_wav(default_wav_path)
-			# print(self.recorded_wav)
 		
 		self.lock = threading.Lock()
 
@@ -214,10 +198,6 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 		self.unprocessed_frames = 0
 		self.preprocessing_data = False
 		self.dynamically_vocoding = False
-		# self.create_result_wav()
-
-
-	
 
 
 	def play_recorded_wav(self):
@@ -242,7 +222,6 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 		except Exception as err:
 			log.error(f"Error when loading {wav_path} - {err} - defaulting to original recorded wav")
 			return
-			# self.recorded_wav = None
 		self.recorded_wav = wav 
 
 	def load_wav_dialog(self):
@@ -255,7 +234,6 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 		if wav is None:
 			log.error(f"Could not save wav, wav is: {wav}")
 			return
-		
 
 		savename = QtWidgets.QFileDialog.getSaveFileName(self, "Save file", "", ".wav")
 		log.info(f"Trying to save wav as {savename}")
@@ -271,10 +249,8 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 		self.save_wav_dialog(self.result_wav, self.sampling_rate)
 
 	def randomize_target(self):
-		# log.info(f"Randomized target embedding to {self.target_embedding}")
 		self.target_embedding = np.random.uniform(low=-.15, high=.15, size=256).astype(np.float32)
 		log.info(f"Randomized target embedding to {self.target_embedding} with max: {max(self.target_embedding)}, min: {min(self.target_embedding)}")
-		# exit(0)
 
 	def pick_file(self):
 		fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', 
@@ -323,11 +299,7 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 						rate=self.sampling_rate, input=True,
 						frames_per_buffer=CHUNK)
 		print("recording...")
-		frames = []
 		
-		# for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-		#     data = stream.read(CHUNK)
-		#     frames.append(data)
 		data = stream.read(RECORD_SIZE_FRAMES * self.hop_size) 
 		self.recorded_wav = np.frombuffer(data, np.float32)
 		print("finished recording")
@@ -349,11 +321,7 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 		print("recording...")
 		frames = []
 		
-		# for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-		#     data = stream.read(CHUNK)
-		#     frames.append(data)
 		data = stream.read(EMBEDDING_SAMPLE_RATE * 8) #8 Seconds of data 
-		# data= stream.read(1000000)
 		fullwav = np.frombuffer(data, np.float32)
 
 		melspect = converter._wav_to_spec(fullwav, EMBEDDING_SAMPLE_RATE).astype(np.float32)
@@ -387,28 +355,22 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 		#========================The conversion chain========================
 		
 		#===========================Librosa/etc audio->spect===================
-		source_spect = converter._wav_to_melgan_spec(np.array(self.recorded_wav).flatten(), self.sampling_rate)                  #            1.convert recorded audio to spect
-		source_spect = torch.from_numpy(source_spect[np.newaxis, :, :]).to(device)                    # (to torch)
+		source_spect = converter._wav_to_melgan_spec(np.array(self.recorded_wav).flatten(), self.sampling_rate) 
+		source_spect = torch.from_numpy(source_spect[np.newaxis, :, :]).to(device)                 
 
 
-		# source_embed = speaker_encoder(source_spect)                                                    #           2. Source spect --> source embedding
 		#============================Autovc spect -> spect=================================
-		
-
-
 		len_pad = ceil(source_spect.size()[1]/32) * 32 - source_spect.size()[1]
-		padded_source = torch.nn.functional.pad(input=source_spect, pad=(0, 0, 0, len_pad, 0, 0), mode='constant', value=0) #pad to base32 #TODO: why +1?? 
+		padded_source = torch.nn.functional.pad(input=source_spect, pad=(0, 0, 0, len_pad, 0, 0), mode='constant', value=0) #pad to base32 
 		with torch.no_grad():
 			_, x_identic_psnt, _ = G(padded_source, self.source_embedding, torch.from_numpy(self.target_embedding[np.newaxis, :]).to(device))
 		target_spect = x_identic_psnt[0]
-		target_spect = torch.nn.functional.pad(input=target_spect, pad=(0, 0, 0, -len_pad, 0, 0), mode='constant', value=0) #pad to base32 #TODO: why +1?? 
+		target_spect = torch.nn.functional.pad(input=target_spect, pad=(0, 0, 0, -len_pad, 0, 0), mode='constant', value=0) #pad to base32 
 		
 		#==================VOCODER SYNTHESIS=========================
 		target_audio = vocoder.synthesize(target_spect[0])
 		self.result_wav = target_audio
 		log.info(f"Done converting to sample of size {self.result_wav.shape}")
-		# target_audio_np = target_audio[0].cpu().numpy() #load to numpy
-		# while True:
 
 	#============================================================================== Live conversion =============================================================================================
 	def get_processed_frame(self, in_data, frame_count, time_info, status):
@@ -460,8 +422,8 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 				
 				#===========================To melgan spect===============================				
 				# get amplitude spectrogram
-				x_stft = librosa.stft(wav, n_fft=self.fft_size, hop_length=self.hop_size, #hopping is done by chunk_queu.pop(self.hop_size) TODO: hop_length window size or fft_size?
-									win_length=self.win_length, window=self.window, center= False)#, pad_mode="reflect")
+				x_stft = librosa.stft(wav, n_fft=self.fft_size, hop_length=self.hop_size, #hopping is done by chunk_queu.pop(self.hop_size)
+									win_length=self.win_length, window=self.window, center= False)
 
 				spc = np.abs(x_stft).T  # (#frames, #bins)
 
@@ -474,15 +436,15 @@ class VoiceRecoder(QtWidgets.QMainWindow):
 				source_spect = self.scaler.transform(source_spect)
 
 				#===========================Through model==============================
-				source_spect = torch.from_numpy(source_spect[np.newaxis, :, :]).to(self.device)                    # (to torch)
+				source_spect = torch.from_numpy(source_spect[np.newaxis, :, :]).to(self.device) 
 
 				#===========================Pad + put through network=======================================
 				len_pad = ceil(source_spect.size()[1]/32) * 32 - source_spect.size()[1]
-				padded_source = torch.nn.functional.pad(input=source_spect, pad=(0, 0, 0, len_pad, 0, 0), mode='constant', value=0) #pad to base32 #TODO: why +1?? 
+				padded_source = torch.nn.functional.pad(input=source_spect, pad=(0, 0, 0, len_pad, 0, 0), mode='constant', value=0) #pad to base32
 				with torch.no_grad():
 					_, x_identic_psnt, _ = self.generator(padded_source, self.source_embedding, torch.from_numpy(self.target_embedding[np.newaxis, :]).to(device))
 				target_spect = x_identic_psnt[0]
-				target_spect = torch.nn.functional.pad(input=target_spect, pad=(0, 0, 0, -len_pad, 0, 0), mode='constant', value=0) #pad to base32 ?  
+				target_spect = torch.nn.functional.pad(input=target_spect, pad=(0, 0, 0, -len_pad, 0, 0), mode='constant', value=0) #pad to base32
 
 				# =========================== Add to processed spect_queue =================
 				self.processed_spect_queue.append(target_spect[0].cpu())
@@ -578,18 +540,11 @@ if __name__ == "__main__":
 						help="What embedding to use, path to target embedding .npy file with shape: [256], source embedding is calculated dynamically")
 	parser.add_argument("--source_embedding_path", type=str, default="./embeddings/Wouter_emb.npy",
 						help="What embedding to use, path to target embedding .npy file with shape: [256], source embedding is calculated dynamically")
-
-	# parser.add_argument("--default_wav_path", type=str, default="./input/Wouter/6.wav")
 	parser.add_argument("--default_wav_path", type=str, default="./input/this_is_a_test_sentence.wav")
 
-	# parser.add_argument("--spectrogram_type", type=str, choices=["standard", "melgan"], default="standard",
-	#                         help="What converter to use, use 'melgan' to convert wavs to 24khz fft'd spectrograms used in the parallel melgan implementation")
 	args = parser.parse_args()
 
 	#=======================Data Converter (spectrogram etc.)========================
-	# if args.spectrogram_type == "standard":
-	#     converter = Converter(device)
-	# elif args.spectrogram_type == "melgan":
 	converter = MelganConverter(device, Config.dir_paths["melgan_config_path"], Config.dir_paths["melgan_stats_path"])
 
 
@@ -632,7 +587,6 @@ if __name__ == "__main__":
 
 	#========================Main loop start===========================
 	log.info("Now starting application")
-	# live_convert(args, device, converter, melgan_config, G, speaker_encoder, vocoder)
 	import sys
 
 	app = QtWidgets.QApplication(sys.argv)

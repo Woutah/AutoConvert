@@ -19,8 +19,8 @@ class NumpyQueue(): #TODO: make threadsafe
         else:
             self._arr[self._cur_idx: self._cur_idx + len(values)] = values
             self._cur_idx += len(values)
-    
-    def peek_idx(self, idx): 
+
+    def peek_idx(self, idx):
         return self._arr[idx].copy() #TODO: copy or not? is this safe
 
     def peek(self, count):
@@ -31,9 +31,9 @@ class NumpyQueue(): #TODO: make threadsafe
 
     def __str__(self):
         return str(self._arr)
-    
+
     def pop(self, count):
-        assert count >= 0 
+        assert count >= 0
         if self._cur_idx < count:
             raise Exception(f'{count} exceeds amount of items in queue ({self._cur_idx + 1})')
 
@@ -42,9 +42,8 @@ class NumpyQueue(): #TODO: make threadsafe
         self._arr = np.roll(self._arr, -count) #[1, 2, 3, 4|] --> [3, 4,| 1, 2]
         return vals
 
-class ThreadNumpyQueue(NumpyQueue): #TODO: although thread unsafe methods are now safe, typing the functions out and only using the locks at the last line might be more efficient
-    
-    #TODO: return copies? Otherwise it might still go wrong (althoug not sure)
+class ThreadNumpyQueue(NumpyQueue):
+
     def __init__(self, *args, **kwargs):
         super(ThreadNumpyQueue, self).__init__(*args, **kwargs)
         self._lock = threading.Lock()
@@ -52,7 +51,7 @@ class ThreadNumpyQueue(NumpyQueue): #TODO: although thread unsafe methods are no
     def append(self, values):
         with self._lock:
             return super(ThreadNumpyQueue, self).append(values)
-    
+
     def peek_idx(self, idx):
         with self._lock:
             return super(ThreadNumpyQueue, self).peek_idx(idx)
@@ -67,7 +66,7 @@ class ThreadNumpyQueue(NumpyQueue): #TODO: although thread unsafe methods are no
     def __str__(self):
         with self._lock:
             return super(ThreadNumpyQueue, self).__str__()
-    
+
     def pop(self, count):
         with self._lock:
             return super(ThreadNumpyQueue, self).pop(count)
@@ -79,14 +78,14 @@ if __name__ == "__main__":
     for i in range(10000):
         testqueue.append([i])
         testqueue.pop(1)
-    
+
     assert len(testqueue) == 0
 
     for i in range(10000):
         testqueue.append([i])
-    
+
     assert np.all(testqueue.pop(5000) == np.array(range(0, 5000)))
-    
+
     testqueue = NumpyQueue(5000, True)
 
     for i in range(10000):
@@ -107,9 +106,6 @@ if __name__ == "__main__":
     for i in range(10):
         testqueue.append(range(5))
         testqueue.pop(10)
-    # print(f"Len testqueue: {len(testqueue)}")
-    # for i in testqueue.pop(50):
-    #     print(i)
 
     assert np.all(testqueue.pop(50) == np.array( [*range(5)] * 10))
 
@@ -126,7 +122,7 @@ if __name__ == "__main__":
 
     testqueue.pop(900)
     assert np.all(testqueue.pop(100) == np.array([9] * 100))
-    
+
 
     for i in range(10000):
         testqueue.append([i])
@@ -134,4 +130,4 @@ if __name__ == "__main__":
     assert(testqueue.pop(len(testqueue)) )
 
     print("All assertions valid!")
-    
+
