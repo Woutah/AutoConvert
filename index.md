@@ -51,8 +51,11 @@ The **New AutoVC + MelGAN** model was trained on the full VCTK dataset, using lo
 ||Wouter (Male) - Unseen<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio>| AutoVC + WaveNet <span class='alignright'>(905.23s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_003xWouter_wavenet.wav'></audio> New AutoVC + MelGAN <span class='alignright'>(1.92s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xWouter_new_melgan.wav'></audio>|
 
 ## Unseen Source
-For unseen source speakers, the **AutoVC + MelGAN** combination manages to generate decent samples, although they are far from perfect. Some target speakers seem to work better than others, this might have to do with the resemblance of the source speaker to the target speaker. 
+Although the style of the unseen source speaker seems to transfer quite well for the **AutoVC + WaveGAN** model when considering these 2 examples, this comes at the cost of clearity. We also believe this model to be overtrained on these examples as this model was trained on very few speakers (about 40), 2 of which were p225 and p226.  
 
+For unseen source speakers, the **AutoVC + MelGAN** combination manages to generate decent samples in a fraction of the time needed by the WaveGAN vocoder, although the results are still far from perfect. 
+
+Some target speakers seem to work better than others, this might have to do with the resemblance of the source speaker to the target speaker. 
 
 
 	
