@@ -28,6 +28,7 @@ A first solution to the slow conversion time was to replace the WaveNet vocoder 
 
 The **New AutoVC + MelGAN** model was retrained on the full VCTK dataset, using the MelGAN-spectrogram format and longer-sized audio samples. This improves audio quality significantly compared to the Griffin-Lim algorithm, while reducing the Vocoder processing time by 99,96% compared to **(AutoVC +) WaveNet**
 
+We encourage readers to try the tool provided in the github repository to generate their own samples. 
 
 ## Short Samples
 | Source Speaker | Target Speaker | Results |
@@ -50,11 +51,13 @@ The **New AutoVC + MelGAN** model was trained on the full VCTK dataset, using lo
 ||Wouter (Male) - Unseen<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio>| AutoVC + WaveNet <span class='alignright'>(905.23s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_003xWouter_wavenet.wav'></audio> New AutoVC + MelGAN <span class='alignright'>(1.92s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xWouter_new_melgan.wav'></audio>|
 
 ## Unseen Source
-	
-Even for unseen source speakers, the **AutoVC + MelGAN** combination manages to generate decent samples. However, the voice style differences issue we described above remains.
+For unseen source speakers, the **AutoVC + MelGAN** combination manages to generate decent samples, although they are far from perfect. Some target speakers seem to work better than others, this might have to do with the resemblance of the source speaker to the target speaker. 
+
+
+
 	
 | Source Speaker | Target Speaker | Results |
 |----|----|----|
-|Wouter (Male)<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio>| p225 (Female) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio>|New AutoVC + MelGAN <span class='alignright'>(1.390s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/6xp225_new_melgan.wav'></audio>|
-||p226 (Male) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio>| New AutoVC + MelGAN <span class='alignright'>(1.152s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/6xp226_new_melgan.wav'></audio>|
+|Wouter (Male)<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio>| p225 (Female) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio>| AutoVC + WaveGAN <span class='alignright'>(362.44s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/6xp225_old_wavenet.wav'></audio>New AutoVC + MelGAN <span class='alignright'>(1.390s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/6xp225_new_melgan.wav'></audio>|
+||p226 (Male) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio>| AutoVC + WaveGAN <span class='alignright'>(369.64s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/6xp226_old_wavenet.wav'></audio> New AutoVC + MelGAN <span class='alignright'>(1.152s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/6xp226_new_melgan.wav'></audio>|
 
