@@ -25,6 +25,7 @@ We notice that AutoVC + WaveNet performs well on short samples. However, its con
 | | Wouter (Male) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio> |AutoVC + WaveNet  <span class='alignright'>(313.75s)</span> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xWouter_wavenet.wav'></audio> AutoVC + MelGAN  <span class='alignright'>(1.31s)</span> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001xWouter_new_melgan.wav'></audio>|
 
 ## Longer Samples
+
 | Source Speaker | Target Speaker | Results |
 |----|----|----|
 |p226 (Male)<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio>| p225 (Female) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio>|AutoVC + WaveNet <span class='alignright'>(1039.64s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xp225_wavenet.wav'></audio> New AutoVC + MelGAN <span class='alignright'>(2.10s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xp225_new_melgan.wav'>|
