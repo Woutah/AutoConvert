@@ -26,7 +26,8 @@ class MelGan(BaseVocoder):
         model.eval()
 
         # B x C x T
-        c = torch.FloatTensor(c)# .unsqueeze(0)[0]
+        if not torch.is_tensor(c):
+            c = torch.FloatTensor(c)# .unsqueeze(0)[0]
         c = c.to(self._device)
 
         print(c.shape)
