@@ -1,0 +1,118 @@
+
+
+=========================================================================== 225_01 --> Wouter  ==================================================================
+
+python convert.py --spectrogram_type=melgan --model_path=./checkpoints/20210504_melgan_lencrop514_autovc_1229998.ckpt
+Vocoder conversion time    CPU: 1.234375    Wall: 0.15200138092041016
+INFO:__main__:Writing inferred audio to: output\20210504_melgan_lencrop514_autovc_1229998\melgan/p225_001xWouter.wav
+Average conversion time    CPU: 1.234375    Wall: 0.15200138092041016
+Total conversion (spectrogram+vocoder) time    CPU: 6.328125    Wall: 1.3123884201049805
+==============================
+
+python convert.py --spectrogram_type=standard --model_path=./networks/autovc.ckpt --vocoder=wavenet
+Vocoder conversion time    CPU: 315.015625    Wall: 313.0629451274872
+INFO:__main__:Writing inferred audio to: output\autovc\wavenet/p225_001xWouter.wav
+Average vocoder conversion time    CPU: 315.015625    Wall: 313.0629451274872
+Total conversion (spectrogram+vocoder) time    CPU: 319.3125    Wall: 313.7479512691498
+
+
+===================== Without chunking=============
+Vocoder conversion time    CPU: 1029.375    Wall: 1027.1511976718903
+INFO:__main__:Writing inferred audio to: output\autovc\wavenet/p226_003xp225.wav
+Average vocoder conversion time    CPU: 1029.375    Wall: 1027.1511976718903
+Total conversion (spectrogram+vocoder) time    CPU: 1040.875    Wall: 1029.174198627472
+
+
+
+=====================================================================================================================================================================================
+============================================================================ 225_01 --> 225==========================================================================================================
+======Griffin========
+Vocoder conversion time    CPU: 4.953125    Wall: 0.587242603302002
+INFO:__main__:Writing inferred audio to: output\autovc\griffin/p225_001xp226.wav
+Average vocoder conversion time    CPU: 4.953125    Wall: 0.587242603302002
+Total conversion (spectrogram+vocoder) time    CPU: 7.734375    Wall: 1.1869564056396484
+======Wavenet=============
+Vocoder conversion time    CPU: 322.234375    Wall: 320.1262218952179
+INFO:__main__:Writing inferred audio to: output\autovc\wavenet/p225_001xp225.wav
+Average vocoder conversion time    CPU: 322.234375    Wall: 320.1262218952179
+Total conversion (spectrogram+vocoder) time    CPU: 326.25    Wall: 320.7599470615387
+
+=====Melgan======
+Vocoder conversion time    CPU: 1.125    Wall: 0.13440489768981934
+INFO:__main__:Writing inferred audio to: output\autovc\melgan/p225_001xp225.wav
+Average vocoder conversion time    CPU: 1.125    Wall: 0.13440489768981934
+Total conversion (spectrogram+vocoder) time    CPU: 5.390625    Wall: 0.7988302707672119
+
+============================================================================ 225_01 --> 226==========================================================================================================
+====================
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 33024/33024 [05:05<00:00, 107.98it/s]
+Vocoder conversion time    CPU: 307.78125    Wall: 305.94114899635315
+INFO:__main__:Writing inferred audio to: output\autovc\wavenet/p225_001xp226.wav
+Average vocoder conversion time    CPU: 307.78125    Wall: 305.94114899635315
+Total conversion (spectrogram+vocoder) time    CPU: 311.9375    Wall: 306.57485818862915
+=====================new Melgan  ================
+Vocoder conversion time    CPU: 1.125    Wall: 0.13699984550476074
+INFO:__main__:Writing inferred audio to: output\20210504_melgan_lencrop514_autovc_1229998\melgan/p225_001xp226.wav
+Average vocoder conversion time    CPU: 1.125    Wall: 0.13699984550476074
+Total conversion (spectrogram+vocoder) time    CPU: 5.890625    Wall: 1.0789997577667236
+
+================== Griffin===============
+Vocoder conversion time    CPU: 4.953125    Wall: 0.587242603302002
+INFO:__main__:Writing inferred audio to: output\autovc\griffin/p225_001xp226.wav
+Average vocoder conversion time    CPU: 4.953125    Wall: 0.587242603302002
+Total conversion (spectrogram+vocoder) time    CPU: 7.734375    Wall: 1.1869564056396484
+
+
+============================================================================ 226_03 (long) --> Wouter + 225 ==========================================================================================================
+
+================226 --> Wouter:===============
+python convert.py --spectrogram_type=standard --model_path=./networks/autovc.ckpt --vocoder=wavenet
+
+Vocoder conversion time    CPU: 906.296875    Wall: 904.1847774982452
+INFO:__main__:Writing inferred audio to: output\autovc\wavenet/p225_003xWouter.wav
+Average vocoder conversion time    CPU: 906.296875    Wall: 904.1847774982452
+Total conversion (spectrogram+vocoder) time    CPU: 913.796875    Wall: 905.2317788600922
+
+
+=============================
+Vocoder conversion time    CPU: 3.0    Wall: 0.38399505615234375
+INFO:__main__:Writing inferred audio to: output\20210504_melgan_lencrop514_autovc_1229998\melgan/p225_003xWouter.wav
+Average vocoder conversion time    CPU: 3.0    Wall: 0.38399505615234375
+Total conversion (spectrogram+vocoder) time    CPU: 12.734375    Wall: 1.924999475479126
+
+================226 --> 225 ====================
+python convert.py --spectrogram_type=standard --model_path=./networks/autovc.ck
+Vocoder conversion time    CPU: 1040.640625    Wall: 1038.6299285888672
+INFO:__main__:Writing inferred audio to: output\autovc\wavenet/p226_003xp225.wav
+Average vocoder conversion time    CPU: 1040.640625    Wall: 1038.6299285888672
+Total conversion (spectrogram+vocoder) time    CPU: 1047.875    Wall: 1039.638929605484
+
+===============
+Vocoder conversion time    CPU: 3.625    Wall: 0.4399991035461426
+INFO:__main__:Writing inferred audio to: output\20210504_melgan_lencrop514_autovc_1229998\melgan/p226_003xp225.wav
+Average vocoder conversion time    CPU: 3.625    Wall: 0.4399991035461426
+Total conversion (spectrogram+vocoder) time    CPU: 13.90625    Wall: 2.1098551750183105
+
+================= No chunking:
+Vocoder conversion time    CPU: 1037.140625    Wall: 1035.1697688102722
+INFO:__main__:Writing inferred audio to: output\autovc\wavenet/p226_003xp225.wav
+Average vocoder conversion time    CPU: 1037.140625    Wall: 1035.1697688102722
+Total conversion (spectrogram+vocoder) time    CPU: 1043.453125    Wall: 1036.1237223148346
+
+
+
+===================================================== Wouter --> p225 & 226 ===================
+============225
+Vocoder conversion time    CPU: 1.484375    Wall: 0.19100117683410645
+INFO:__main__:Writing inferred audio to: output\20210504_melgan_lencrop514_autovc_1229998\melgan/6xp225.wav
+Average vocoder conversion time    CPU: 1.484375    Wall: 0.19100117683410645
+Total conversion (spectrogram+vocoder) time    CPU: 6.90625    Wall: 1.3903825283050537
+
+==========226
+Vocoder conversion time    CPU: 1.25    Wall: 0.16100049018859863
+INFO:__main__:Writing inferred audio to: output\20210504_melgan_lencrop514_autovc_1229998\melgan/6xp226.wav
+Average vocoder conversion time    CPU: 1.25    Wall: 0.16100049018859863
+Total conversion (spectrogram+vocoder) time    CPU: 6.515625    Wall: 1.1529998779296875
+
+
+

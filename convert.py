@@ -97,6 +97,7 @@ def output_to_wav(output_data, vocoder, output_dir, sample_rate):
 		wall_total = 0
 		cpu_total = 0
 		for spect in output_data:
+			# print(spect)
 			name = spect[0]
 			print(name)
 			
@@ -117,7 +118,7 @@ def output_to_wav(output_data, vocoder, output_dir, sample_rate):
 			log.info(f"Writing inferred audio to: {output_dir}/{name}.wav")
 			sf.write(os.path.join(output_dir, name + ".wav"), waveform, sample_rate)
 		
-		print(f"Average conversion time    CPU: {cpu_total/len(output_data)}    Wall: {wall_total/len(output_data)}")
+		print(f"Average vocoder conversion time    CPU: {cpu_total/len(output_data)}    Wall: {wall_total/len(output_data)}")
 
   
   
@@ -136,14 +137,14 @@ if __name__ == "__main__":
 						help="What vocoder to use")
 	parser.add_argument("--force_preprocess", action="store_true",
 						help="Whether to force preprocessing or not")
-	parser.add_argument('--len_crop', type=int, default=128, help='dataloader output sequence length, split on this amount')
+	parser.add_argument('--len_crop', type=int, default=0, help='dataloader output sequence length, split on this amount')
 	parser.add_argument("--spectrogram_type", type=str, choices=["standard", "melgan"], default="standard",
 							help="What converter to use, use 'melgan' to convert wavs to 24khz fft'd spectrograms used in the parallel melgan implementation")
 	args = parser.parse_args()
 
-	target_speaker = args.target if args.target is not None else "p226"
-	source_speaker = args.source if args.source is not None else "Wouter"
-	source_list = args.source_wav if args.source_wav is not None else ["3"]#, "4", "5", "6", "7"]
+	target_speaker = args.target if args.target is not None else "p225"
+	source_speaker = args.source if args.source is not None else "p226"
+	source_list = args.source_wav if args.source_wav is not None else ["p226_003"]#, "4", "5", "6", "7"]
 #python convert.py --spectrogram_type=melgan --model_path=./checkpoints/20210504_melgan_lencrop514_autovc_1229998.ckpt --vocoder=melgan --len_crop=0 --target Wouter --source p226 --source_wav p226_003 p226_005 p226_008 p226_011 p226_016 p226_019 p226_021 p226_022 p226_023
 	# directories
 	input_dir = Config.dir_paths["input"]
@@ -192,9 +193,15 @@ if __name__ == "__main__":
 
 	skip = not args.force_preprocess
 	input_data = converter.wav_to_convert_input(input_dir, source_speaker, target_speaker, source_list, converted_data_dir, metadata_name, skip_existing=skip, len_crop=args.len_crop) #split_spects=split)
+	wall_timer = timer.WallTimer()
+	cpu_timer = timer.CpuTimer()
+	
+	wall_timer.start_timer()
+	cpu_timer.start_timer()
 
 	output_data = inference(output_file_dir, device, args.model_path, input_data=input_data, savename=f"spects_{source_speaker}x{target_speaker}_lencrop{args.len_crop}_sources_{str([ str(i)+'_' for i in source_list])}")
-
-	
 	output_to_wav(output_data, vocoder, output_file_dir, sr)
 
+	wall_timer.pause_timer()
+	cpu_timer.pause_timer()
+	print(f"Total conversion (spectrogram+vocoder) time    CPU: {cpu_timer.get_time()}    Wall: {wall_timer.get_time()}")
