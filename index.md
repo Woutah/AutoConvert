@@ -26,11 +26,19 @@ We notice that AutoVC + WaveNet performs well on short samples. However, its con
 
 ## Longer Samples
 
+With longer input samples, we noticed that the vanilla AutoVC model's output was scrambled after a few seconds. This issue was solved by dividing the input audio into chunks and processing those sequentially.
+
 | Source Speaker | Target Speaker | Results |
 |----|----|----|
-|p226 (Male)<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio>| p225 (Female) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio>|AutoVC + WaveNet <span class='alignright'>(1039.64s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xp225_wavenet_chunked.wav'></audio> New AutoVC + MelGAN <span class='alignright'>(2.10s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xp225_new_melgan.wav'>|
+|p226 (Male)<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio>| p225 (Female) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio>|AutoVC + WaveNet (no chunking) <span class='alignright'>(1039.64s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xp225_wavenet_no_chunking.wav'></audio> AutoVC + WaveNet (chunking) <span class='alignright'>(1040.37s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xp225_wavenet_chunked.wav'></audio> New AutoVC + MelGAN <span class='alignright'>(2.10s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xp225_new_melgan.wav'>|
 ||Wouter (Male) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio>| AutoVC + WaveNet <span class='alignright'>(905.23s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_003xWouter_wavenet.wav'></audio> New AutoVC + MelGAN <span class='alignright'>(1.92s)</span><br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003xWouter_new_melgan.wav'></audio>|
-||225 (Female)|
 
-
+## Unseen Content
+	
+Even for unseen content, the AutoVC + MelGAN combination manages to generate decent samples. However, the voice style differences issue we described above remains.
+	
+| Source Speaker | Target Speaker | Results |
+|----|----|----|
+|Wouter (Male)<br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/Wouter_this_is_a_testsentence.wav'></audio>| p225 (Female) <br>  <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p225_001.wav'></audio>|New AutoVC + MelGAN <span class='alignright'>(1.390s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/6xp225_new_melgan.wav'></audio>|
+||p226 (Male) <br> <audio controls> <source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/p226_003.wav'></audio>| New AutoVC + MelGAN <span class='alignright'>(1.152s)</span> <br> <audio controls><source src='https://raw.githubusercontent.com/Woutah/API/gh-pages/samples/6xp226_new_melgan.wav'></audio>|
 
