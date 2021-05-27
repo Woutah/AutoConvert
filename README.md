@@ -23,7 +23,7 @@ Where:
 
 Running the sample results in the following menu:
 
-<img src="./etc/gui_example.png" width="400" />
+<img src="./etc/gui_example2.png" width="400" />
 
 A typical conversion process consists of:
 
@@ -38,7 +38,7 @@ The results can be saved using the `save` buttons, the target embedding can be l
 The live-converter can be started using:
 
 ```
-python live_converter.py --model_path ./path/to/melgan.ckpt --target_embedding_path ./path/to/target_emb.npy --source_embedding_path ./path/to/source_emb.npy
+python record_convert.py --model_path ./path/to/melgan.ckpt --target_embedding_path ./path/to/target_emb.npy --source_embedding_path ./path/to/source_emb.npy
 ```
 The arguments are the same as for the aforementation `interface` script
 
