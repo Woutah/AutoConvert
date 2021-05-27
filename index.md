@@ -22,7 +22,7 @@ The baseline model, provided by the authors, is **AutoVC+WaveNet**.
 
 We notice that **AutoVC + WaveNet** performs well on short samples with seen speakers. However, its conversion times are very long and its performance is very bad when the target speaker is unseen (sample p225 &rarr;Wouter AutoVC+WaveNet). Furthermore, the performance on longer audio-samples is quite bad (sample p226 &rarr; AutoVC+WaveNet) due to it being trained on samples of circa 2 seconds.
 
-A solution to the 2-second limitation is the introduction of chunking, which divides the audio sample into chunks of ca. 2 seconds (see p226 &rarr; Wouter | AutoVC + WaveNet (chunking)), although this might introduce some 'choppyness' when cutting is done in the middle of sentences due to the context loss.
+A solution to the 2-second limitation is the introduction of chunking, which divides the audio sample into chunks of ca. 2 seconds (see p226 &rarr; Wouter - **AutoVC + WaveNet (chunking)**), although this might introduce some 'choppyness' when cutting is done in the middle of sentences due to the context loss.
 
 A first solution to the slow conversion time was to replace the WaveNet vocoder by a Griffin-Lim algorithm. This significantly improved conversion speed, at the cost of audio quality. We aimed to improve this by introducing the Multiband MelGAN model. 
 
