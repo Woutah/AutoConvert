@@ -26,7 +26,7 @@ A solution to the 2-second limitation is the introduction of chunking, which div
 
 A first solution to the slow conversion time was to replace the WaveNet vocoder by a Griffin-Lim algorithm. This significantly improved conversion speed, at the cost of audio quality. We aimed to improve this by introducing the Multiband MelGAN model. 
 
-The **New AutoVC + MelGAN** model was retrained on the full VCTK dataset, using the MelGAN-spectrogram format and longer-sized audio samples. This improves audio quality significantly compared to the Griffin-Lim algorithm, while reducing the Vocoder processing time by 99,96% compared to **(AutoVC +) WaveNet**
+The **New AutoVC + MelGAN** model was retrained on the full VCTK dataset, using the MelGAN-spectrogram format and longer-sized audio samples. This improves audio quality significantly compared to the Griffin-Lim algorithm, while reducing the Vocoder processing time by 99,96% compared to **(AutoVC +) WaveNet**.
 
 We encourage readers to try the tool provided in the github repository to generate their own samples. 
 
